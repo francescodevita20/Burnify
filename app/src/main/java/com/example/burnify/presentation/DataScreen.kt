@@ -20,7 +20,7 @@ fun DataScreen(
     compassViewModel: CompassViewModel
 ) {
     val accelerometerData = accelerometerViewModel.accelerometerData.observeAsState()
-    val compassData = compassViewModel.compassDirection.observeAsState()
+    val compassData = compassViewModel.compassData.observeAsState()
 
     Column(
         modifier = Modifier
@@ -63,7 +63,23 @@ fun DataScreen(
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colors.primary,
-            text = "Compass Direction: ${compassData.value ?: 0}"
+            text = "Number of Compass Samples: ${compassData.value?.size ?: 0}"
         )
+
+        compassData.value?.lastOrNull()?.let { sample ->
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colors.primary,
+                text = "Compass Data:\nX: ${sample.angle}"
+            )
+        } ?: run {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colors.primary,
+                text = "Loading compass data..."
+            )
+        }
     }
 }

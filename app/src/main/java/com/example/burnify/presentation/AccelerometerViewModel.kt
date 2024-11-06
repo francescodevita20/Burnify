@@ -43,8 +43,6 @@ class AccelerometerViewModel(application: Application) : AndroidViewModel(applic
         accelerometerSensor?.let {
             // Registra l'ascoltatore con un ritardo di 40 millisecondi (25 Hz)
             sensorManager.registerListener(sensorEventListener, it, 40 * 1000) // 40 ms in microsecondi
-
-
         }
     }
 

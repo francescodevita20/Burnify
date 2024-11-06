@@ -101,7 +101,7 @@ class AccelerometerDataProcessor {
         val results = processMeasurements(measurements)
         return buildString {
             results.forEach { (key, value) ->
-                appendLine("$key: $value\n")
+                appendLine("$key: $value")
             }
         }
     }

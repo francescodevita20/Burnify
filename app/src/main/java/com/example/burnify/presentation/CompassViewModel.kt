@@ -12,32 +12,40 @@ import androidx.lifecycle.MutableLiveData
 import kotlin.math.abs
 
 class CompassViewModel(application: Application) : AndroidViewModel(application) {
-    private val _compassDirection = MutableLiveData<Float>()
-    val compassDirection: LiveData<Float> = _compassDirection
 
-    private var lastDirection: Float = 0f // Ultima direzione registrata
+    // LiveData to expose the list of compass samples
+    private val _compassData = MutableLiveData<List<CompassSample>>()
+    val compassData: LiveData<List<CompassSample>> = _compassData
 
-    // Definire sensorManager e sensorEventListener come variabili di classe
+    // Instance of CompassMeasurements to store samples
+    private val compassMeasurements = CompassMeasurements()
+
+    // Holds the last recorded direction to check for significant changes
+    private var lastDirection: Float = 0f
+
     private val sensorManager: SensorManager =
         application.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+
+    // Listener for compass (rotation vector) sensor events
     private val sensorEventListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
             if (event.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
                 val rotationMatrix = FloatArray(9)
                 val orientation = FloatArray(3)
 
-                // Converti il vettore di rotazione in una matrice di rotazione
+                // Convert rotation vector to rotation matrix and then to azimuth in degrees
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                 SensorManager.getOrientation(rotationMatrix, orientation)
-
-                // Calcola l'azimuth (direzione della bussola) in gradi
                 val azimuthInDegrees = Math.toDegrees(orientation[0].toDouble()).toFloat()
-                val normalizedAzimuth = (azimuthInDegrees + 360) % 360 // Normalizza a [0, 360]
+                val normalizedAzimuth = (azimuthInDegrees + 360) % 360 // Normalize to [0, 360]
 
-                // Aggiorna solo se la differenza rispetto all'ultima direzione è maggiore di 1 grado
+                // Update if the direction has changed by more than 1 degree
                 if (abs(normalizedAzimuth - lastDirection) > 1) {
                     lastDirection = normalizedAzimuth
-                    _compassDirection.postValue(normalizedAzimuth)
+
+                    // Add sample to CompassMeasurements and post the updated list
+                    compassMeasurements.addSample(CompassSample(normalizedAzimuth))
+                    _compassData.postValue(compassMeasurements.getSamples())
                 }
             }
         }
@@ -52,13 +60,17 @@ class CompassViewModel(application: Application) : AndroidViewModel(application)
     private fun initializeCompassListener() {
         val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         rotationSensor?.let {
+            // Register the listener with the UI delay setting
             sensorManager.registerListener(sensorEventListener, it, SensorManager.SENSOR_DELAY_UI)
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        // Deregistra il listener quando il ViewModel è distrutto
+        // Unregister the listener when the ViewModel is cleared
         sensorManager.unregisterListener(sensorEventListener)
     }
+
+    // Retrieve the stored compass samples if needed
+    fun getCompassSamples(): List<CompassSample> = compassMeasurements.getSamples()
 }
