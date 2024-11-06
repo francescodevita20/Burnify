@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/navigation_today" android:icon="@drawable/ic_today"
+        android:title="@string/title_today" />
+
+    <item android:id="@+id/navigation_data" android:icon="@drawable/ic_data"
+        android:title="@string/title_data" />
+
+    <item android:id="@+id/navigation_settings" android:icon="@drawable/ic_settings"
+        android:title="@string/title_settings" />
+</menu>
