@@ -22,7 +22,7 @@ fun ScreenContent(selectedPage: String, accelerometerViewModel: AccelerometerVie
 
     when (selectedPage) {
         "Today" -> {
-            Text(qaaa
+            Text(
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colors.primary,
