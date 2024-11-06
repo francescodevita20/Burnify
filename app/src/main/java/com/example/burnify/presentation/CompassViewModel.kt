@@ -11,11 +11,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import kotlin.math.abs
 
+
+
+
+
 class CompassViewModel(application: Application) : AndroidViewModel(application) {
 
-    // LiveData to expose the list of compass samples
-    private val _compassData = MutableLiveData<List<CompassSample>>()
-    val compassData: LiveData<List<CompassSample>> = _compassData
+    val compassData = MutableLiveData<List<CompassSample>>()
 
     // Instance of CompassMeasurements to store samples
     private val compassMeasurements = CompassMeasurements()
@@ -45,8 +47,13 @@ class CompassViewModel(application: Application) : AndroidViewModel(application)
 
                     // Add sample to CompassMeasurements and post the updated list
                     compassMeasurements.addSample(CompassSample(normalizedAzimuth))
-                    _compassData.postValue(compassMeasurements.getSamples())
+                    compassData.postValue(compassMeasurements.getSamples())
+                }else {
+                    // Add the previous sample to the data list if the direction has not changed
+                    compassMeasurements.addSample(CompassSample(lastDirection))
+                    compassData.postValue(compassMeasurements.getSamples())
                 }
+
             }
         }
 
@@ -71,6 +78,8 @@ class CompassViewModel(application: Application) : AndroidViewModel(application)
         sensorManager.unregisterListener(sensorEventListener)
     }
 
+
     // Retrieve the stored compass samples if needed
     fun getCompassSamples(): List<CompassSample> = compassMeasurements.getSamples()
+    fun getLastCompassSample(): CompassSample? = compassMeasurements.getLastSample()
 }

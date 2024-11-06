@@ -25,9 +25,14 @@ class AccelerometerMeasurements {
     fun getSamples(): List<AccelerometerSample> {
         return samples.toList() // Restituisce una copia della lista
     }
+    fun getLastSample(): AccelerometerSample? {
+        return samples.lastOrNull()
+    }
 
     fun isFull(): Boolean {
         return samples.size >= 500 // Controlla se sono stati raccolti 500 campioni
     }
+
+
 }
 

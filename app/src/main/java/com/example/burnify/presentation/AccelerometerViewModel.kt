@@ -11,9 +11,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 
 class AccelerometerViewModel(application: Application) : AndroidViewModel(application) {
-    private val _accelerometerData = MutableLiveData<List<AccelerometerSample>>()
-    val accelerometerData: LiveData<List<AccelerometerSample>> = _accelerometerData
 
+    val accelerometerData = MutableLiveData<List<AccelerometerSample>>()
     private val measurements = AccelerometerMeasurements() // Crea un'istanza di AccelerometerMeasurements
 
     // Dichiarazione di sensorManager e sensorEventListener come variabili di classe
@@ -27,7 +26,7 @@ class AccelerometerViewModel(application: Application) : AndroidViewModel(applic
             // Aggiorna i dati dell'accelerometro con i nuovi valori
             measurements.addSample(AccelerometerSample(x, y, z))
 
-            _accelerometerData.postValue(measurements.getSamples()) // Passa la lista di campioni
+            accelerometerData.postValue(measurements.getSamples()) // Passa la lista di campioni
 
         }
 
@@ -51,4 +50,7 @@ class AccelerometerViewModel(application: Application) : AndroidViewModel(applic
         // Deregistra il listener quando il ViewModel è distrutto
         sensorManager.unregisterListener(sensorEventListener)
     }
+
+    fun getAccelerometerSamples(): List<AccelerometerSample> = measurements.getSamples()
+    fun getLastAccelerometerSample(): AccelerometerSample? = measurements.getLastSample()
 }
