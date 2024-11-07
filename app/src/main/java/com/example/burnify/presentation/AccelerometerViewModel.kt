@@ -9,26 +9,23 @@ import android.hardware.SensorManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-
 class AccelerometerViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val accelerometerData = MutableLiveData<List<AccelerometerSample>>()
-    fun getAccelerometerData(): LiveData<List<AccelerometerSample>> { return accelerometerData }
-    private val measurements = AccelerometerMeasurements() // Crea un'istanza di AccelerometerMeasurements
-
-    // Dichiarazione di sensorManager e sensorEventListener come variabili di classe
+    private val accelerometerData = MutableLiveData<AccelerometerSample>() // Singolo campione
     private val sensorManager: SensorManager =
         application.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+
     private val sensorEventListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
-            val x = event.values[0]
-            val y = event.values[1]
-            val z = event.values[2]
-            // Aggiorna i dati dell'accelerometro con i nuovi valori
-            measurements.addSample(AccelerometerSample(x, y, z))
+            // Estrai i valori direttamente
+            val (x, y, z) = event.values
 
-            accelerometerData.postValue(measurements.getSamples()) // Passa la lista di campioni
+            // Crea e aggiorna il campione
+            val sample = AccelerometerSample()
+            sample.setSample(x, y, z)
 
+            // Posta il campione direttamente
+            accelerometerData.postValue(sample)
         }
 
         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
@@ -41,17 +38,14 @@ class AccelerometerViewModel(application: Application) : AndroidViewModel(applic
     private fun initializeAccelerometerListener() {
         val accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         accelerometerSensor?.let {
-            // Registra l'ascoltatore con un ritardo di 40 millisecondi (25 Hz)
-            sensorManager.registerListener(sensorEventListener, it, 40 * 1000) // 40 ms in microsecondi
+            sensorManager.registerListener(sensorEventListener, it, 40 * 1000) // 40ms
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        // Deregistra il listener quando il ViewModel è distrutto
         sensorManager.unregisterListener(sensorEventListener)
     }
 
-    fun getAccelerometerSamples(): List<AccelerometerSample> = measurements.getSamples()
-    fun getLastAccelerometerSample(): AccelerometerSample? = measurements.getLastSample()
+    fun getAccelerometerData(): LiveData<AccelerometerSample> = accelerometerData
 }

@@ -3,18 +3,26 @@ package com.example.burnify.presentation
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.sqrt
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class AccelerometerDataProcessor {
 
     fun processMeasurements(measurements: AccelerometerMeasurements): Map<String, Any> {
         val samples = measurements.getSamples()
 
-        val xValues = samples.map { it.x }
-        val yValues = samples.map { it.y }
-        val zValues = samples.map { it.z }
-        val magnitudes = samples.map { sqrt(it.x.pow(2) + it.y.pow(2) + it.z.pow(2)) }
+        val xValues = samples.map { it.getX() }
+        val yValues = samples.map { it.getY() }
+        val zValues = samples.map { it.getZ() }
+        val magnitudes = samples.map { sqrt(it.getX().pow(2) + it.getY().pow(2) + it.getZ().pow(2)) }
 
+        // Ottieni la data e l'orario correnti
+        val currentDateTime = LocalDateTime.now()
+        val formattedDateTime = currentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+
+        // Aggiungi la data e l'orario ai risultati
         return mapOf(
+            "ProcessedAt" to formattedDateTime,
             "MeanX" to calculateMean(xValues),
             "MeanY" to calculateMean(yValues),
             "MeanZ" to calculateMean(zValues),
