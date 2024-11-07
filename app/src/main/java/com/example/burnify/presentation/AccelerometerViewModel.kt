@@ -12,7 +12,8 @@ import androidx.lifecycle.MutableLiveData
 
 class AccelerometerViewModel(application: Application) : AndroidViewModel(application) {
 
-    val accelerometerData = MutableLiveData<List<AccelerometerSample>>()
+    private val accelerometerData = MutableLiveData<List<AccelerometerSample>>()
+    fun getAccelerometerData(): LiveData<List<AccelerometerSample>> { return accelerometerData }
     private val measurements = AccelerometerMeasurements() // Crea un'istanza di AccelerometerMeasurements
 
     // Dichiarazione di sensorManager e sensorEventListener come variabili di classe

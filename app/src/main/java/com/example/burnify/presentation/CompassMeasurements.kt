@@ -16,7 +16,6 @@ class CompassMeasurements {
 
         // Stampa dopo 500 campioni raccolti
         if (samplesCount == 500) {
-            //println(compassDataProcessor.getResultsAsString(this))
             println(this.getSamples())
             samplesCount = 0
         }
@@ -30,6 +29,6 @@ class CompassMeasurements {
     }
 
     fun isFull(): Boolean {
-        return samples.size >= 500 // Controlla se sono stati raccolti 1500 campioni
+        return samples.size >= 500
     }
 }

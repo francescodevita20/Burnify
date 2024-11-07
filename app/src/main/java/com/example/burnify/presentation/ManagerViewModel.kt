@@ -20,9 +20,9 @@ class ManagerViewModel(
     init {
         // Attiva l'ascoltatore dell'accelerometro se il parametro è true
         if (shouldMonitorAccelerometer) {
-            /*accelerometerViewModel.getAccelerometerSamples().observeForever {
+            accelerometerViewModel.getAccelerometerSamples().observeForever {
                 accelerometerData.postValue(it)
-            }*/
+            }
         }
 
         // Attiva l'ascoltatore della bussola se il parametro è true
@@ -36,7 +36,7 @@ class ManagerViewModel(
     override fun onCleared() {
         super.onCleared()
         // Deregistra gli osservatori quando il ViewModel viene distrutto
-        accelerometerViewModel.accelerometerData.removeObserver { }
+        accelerometerViewModel.getAccelerometerData().removeObserver { }
         //compassViewModel.compassData.removeObserver { }
     }
 

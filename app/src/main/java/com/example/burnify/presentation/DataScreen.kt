@@ -19,15 +19,15 @@ fun DataScreen(
     accelerometerViewModel: AccelerometerViewModel,
     compassViewModel: CompassViewModel
 ) {
-    val accelerometerData = accelerometerViewModel.accelerometerData.observeAsState()
-    val compassData = compassViewModel.compassData.observeAsState()
+    val accelerometerData = accelerometerViewModel.getAccelerometerData().observeAsState()
+    val compassData = compassViewModel.getCompassData().observeAsState()
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(50.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text(
             modifier = Modifier.fillMaxWidth(),

@@ -17,7 +17,11 @@ import kotlin.math.abs
 
 class CompassViewModel(application: Application) : AndroidViewModel(application) {
 
-    val compassData = MutableLiveData<List<CompassSample>>()
+    private val compassData = MutableLiveData<List<CompassSample>>()
+
+    fun getCompassData(): MutableLiveData<List<CompassSample>> {
+        return compassData
+    }
 
     // Instance of CompassMeasurements to store samples
     private val compassMeasurements = CompassMeasurements()
