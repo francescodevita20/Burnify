@@ -1,13 +1,15 @@
 package com.example.burnify.presentation
 
-class CompassSample{
+import java.io.Serializable
+
+class CompassSample : Serializable {
     private var angle: Float = 0f
     fun setAngle(angle: Float){this.angle = angle}
     fun getAngle(): Float{return angle}
 
     }
 
-class CompassMeasurements {
+class CompassMeasurements : Serializable {
     private val samples = mutableListOf<CompassSample>()
     private var samplesCount = 0
     private var maxSize = 500  // Definisce la dimensione massima della lista
@@ -17,6 +19,13 @@ class CompassMeasurements {
     fun setMaxSize(size: Int) {
         maxSize = size
     }
+
+    fun setSamples(samples: List<CompassSample>) {
+        this.samples.clear()
+        this.samples.addAll(samples)
+        this.samplesCount = samples.size
+    }
+
 
     // Aggiungi un nuovo campione alla lista
     fun addSample(sample: CompassSample) {

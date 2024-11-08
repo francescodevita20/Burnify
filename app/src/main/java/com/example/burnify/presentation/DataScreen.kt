@@ -12,50 +12,45 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 
 @Composable
 fun DataScreen(
     accelerometerViewModel: AccelerometerViewModel,
-    compassViewModel: CompassViewModel
+    compassViewModel: CompassViewModel,
+    sharedDataViewModel: SharedDataViewModel = viewModel()
 ) {
     val accelerometerData = accelerometerViewModel.getAccelerometerData().observeAsState()
     val compassData = compassViewModel.getCompassData().observeAsState()
-    val accelerometerMeasurements = remember { AccelerometerMeasurements() }
-    val compassMeasurements = remember { CompassMeasurements() }  // Oggetto per salvare gli angoli della bussola
 
-    // Creazione di una variabile di stato per memorizzare l'ultimo angolo
+    // Use rememberSaveable with custom Savers
+    val accelerometerMeasurements = sharedDataViewModel.accelerometerMeasurements
+    val compassMeasurements = sharedDataViewModel.compassMeasurements
+
     val lastAngle = remember { mutableStateOf<Float?>(null) }
+    val lastAccelerometer = remember { mutableStateOf<AccelerometerSample?>(null) }
 
-    // Se il valore dell'angolo cambia, stampalo
     LaunchedEffect(compassData.value) {
         compassData.value?.let { sample ->
             if (lastAngle.value == null || lastAngle.value != sample.getAngle()) {
-                println("Compass Data Changed: Angle: ${sample.getAngle()}")
-                lastAngle.value = sample.getAngle()// Aggiorna l'ultimo angolo
+                lastAngle.value = sample.getAngle()
             }
         }
     }
 
-    // Creazione di una variabile di stato per memorizzare l'ultimo campione accelerometrico
-    val lastAccelerometer = remember { mutableStateOf<AccelerometerSample?>(null) }
-
     LaunchedEffect(accelerometerData.value) {
-        accelerometerData.value?.let { sample ->
-            // Aggiungi il campione accelerometrico
-            accelerometerMeasurements.addSample(sample)
-
-            // Aggiungi anche l'angolo corrente della bussola
+        accelerometerData.value?.let { accelerometerSample ->
+            lastAccelerometer.value = accelerometerSample
+            accelerometerMeasurements.addSample(accelerometerSample)
             compassData.value?.let { compassSample ->
-                compassMeasurements.addSample(compassSample)  // Salva l'angolo della bussola
+                compassMeasurements.addSample(compassSample)
             }
-
-            println("Accelerometer Data Changed: X: ${sample.getX()}, Y: ${sample.getY()}, Z: ${sample.getZ()}")
-            lastAccelerometer.value = sample // Aggiorna l'ultimo campione
         }
     }
 
@@ -77,14 +72,14 @@ fun DataScreen(
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colors.primary,
-            text = "Number of Accelerometer Samples: ${accelerometerMeasurements.getSamples().size}"
+            text = "Accelerometer Samples: ${accelerometerMeasurements.getSamples().size}"
         )
 
         Text(
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colors.primary,
-            text = "Number of Compass Samples: ${compassMeasurements.getSamples().size}"
+            text = "Compass Samples: ${compassMeasurements.getSamples().size}"
         )
 
         accelerometerData.value?.let { sample ->
@@ -103,7 +98,6 @@ fun DataScreen(
             )
         }
 
-        // Visualizzazione dei dati della bussola
         compassData.value?.let { sample ->
             Text(
                 modifier = Modifier.fillMaxWidth(),

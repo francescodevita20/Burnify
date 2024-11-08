@@ -36,6 +36,12 @@ class AccelerometerMeasurements {
         maxSize = size
     }
 
+    fun setSamples(samples: List<AccelerometerSample>) {
+        this.samples.clear()
+        this.samples.addAll(samples)
+        this.samplesCount = samples.size
+    }
+
     fun addSample(sample: AccelerometerSample) {
         samplesCount += 1
 
