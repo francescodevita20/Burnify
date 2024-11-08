@@ -34,7 +34,7 @@ class AccelerometerDataProcessor {
             "PercentilesZ" to calculatePercentiles(zValues),
             "ThirdMoment" to calculateMoment(magnitudes, 3),
             "FourthMoment" to calculateMoment(magnitudes, 4),
-            "EntropyValue" to calculateEntropy(magnitudes),
+            "EntropyValue" to calculateEntropy(magnitudes, 8),
             "SpectralCharacteristics" to calculateSpectralCharacteristics(magnitudes),
             "Autocorrelation" to calculateAutocorrelation(magnitudes),
             "AxisCorrelation" to calculateAxisCorrelation(xValues, yValues, zValues)
@@ -65,20 +65,36 @@ class AccelerometerDataProcessor {
         )
     }
 
-    private fun calculateEntropy(values: List<Float>): Float {
-        val frequencyMap = values.groupingBy { it }.eachCount().mapValues { it.value / values.size.toFloat() }
-        return -frequencyMap.values.map { p ->
-            if (p > 0) {
-                p * ln(p.toDouble()) // Converte solo il calcolo del logaritmo in Double
-            } else {
-                0.0 // Mantieni il valore come Double
-            }
-        }.sum().toFloat() // Somma i valori e converte il risultato finale in Float
+    private fun calculateEntropy(values: List<Float>, bins: Int): Float {
+        val min = values.minOrNull() ?: return 0f
+        val max = values.maxOrNull() ?: return 0f
+        val binWidth = (max - min) / bins
+
+        // Count occurrences in each bin
+        val binCounts = IntArray(bins)
+        for (value in values) {
+            val binIndex = ((value - min) / binWidth).toInt().coerceIn(0, bins - 1)
+            binCounts[binIndex]++
+        }
+
+        // Calculate probabilities
+        val total = values.size.toFloat()
+        val probabilities = binCounts.map { it / total }
+
+        // Calculate entropy
+        return -probabilities.filter { it > 0 }
+            .sumOf { p ->
+                if (p > 0) {
+                    p * ln(p.toDouble())  // Convert the log calculation to Double
+                } else {
+                    0.0  // Keep the value as Double
+                }
+            }.toFloat()  // Convert the final result to Float
     }
 
     private fun calculateSpectralCharacteristics(values: List<Float>): Map<String, Float> {
         val logEnergy = values.sumOf { it.pow(2).toDouble() }.let { ln(it) }.toFloat()
-        val spectralEntropy = calculateEntropy(values)
+        val spectralEntropy = calculateEntropy(values,8)
         return mapOf("LogEnergy" to logEnergy, "SpectralEntropy" to spectralEntropy)
     }
 

@@ -30,8 +30,8 @@ fun DataScreen(
     val compassData = compassViewModel.getCompassData().observeAsState()
 
     // Use rememberSaveable with custom Savers
-    val accelerometerMeasurements = sharedDataViewModel.accelerometerMeasurements
-    val compassMeasurements = sharedDataViewModel.compassMeasurements
+    val accelerometerMeasurements = sharedDataViewModel.getAccelerometerMeasurements()
+    val compassMeasurements = sharedDataViewModel.getCompassMeasurements()
 
     val lastAngle = remember { mutableStateOf<Float?>(null) }
     val lastAccelerometer = remember { mutableStateOf<AccelerometerSample?>(null) }
