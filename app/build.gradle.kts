@@ -15,6 +15,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -39,35 +40,28 @@ android {
 }
 
 dependencies {
-    // Dipendenze per Wear OS
-    implementation("androidx.wear:wear:1.3.0") // Libreria Wear OS
-    implementation(libs.compose.material.v100) // Compose per Wear OS
-    implementation ("androidx.compose.material:material-icons-extended:1.7.5")
-    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-    // Librerie tramite `libs.`
-    implementation(libs.play.services.wearable)
-    implementation(platform(libs.compose.bom))
-    implementation(libs.ui)
-    implementation(libs.ui.graphics)
-    implementation(libs.ui.tooling.preview)
-    implementation(libs.compose.material)
-    implementation(libs.compose.foundation)
-    implementation(libs.wear.tooling.preview)
-    implementation(libs.activity.compose)
-    implementation(libs.core.splashscreen)
-    implementation(libs.tiles)
-    implementation(libs.tiles.material)
-    implementation(libs.horologist.compose.tools)
-    implementation(libs.horologist.tiles)
-    implementation(libs.watchface.complications.data.source.ktx)
-    implementation(libs.material3.android)
-    implementation(libs.runtime.livedata)
+    implementation("androidx.compose.material:material-icons-extended:1.7.5") // Usa la versione più recente
+    implementation("androidx.compose.material3:material3:1.3.1") // Usa la versione di Material 3
+    dependencies {
+        implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7") // O l'ultima versione disponibile
+    }
 
-    // Dipendenze per test Android
-    androidTestImplementation(platform(libs.compose.bom))
-    androidTestImplementation(libs.ui.test.junit4)
 
-    // Dipendenze di debug
-    debugImplementation(libs.ui.tooling)
-    debugImplementation(libs.ui.test.manifest)
+
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.runtime.livedata)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }
