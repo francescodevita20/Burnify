@@ -1,4 +1,4 @@
-package com.example.burnify
+package com.example.burnify.service
 
 import android.app.Service
 import android.content.Context
@@ -11,6 +11,9 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import androidx.lifecycle.ViewModelProvider
+import com.example.burnify.model.AccelerometerMeasurements
+import com.example.burnify.model.AccelerometerSample
+import com.example.burnify.viewmodel.AccelerometerViewModel
 
 
 class AccelerometerService : Service(), SensorEventListener {
@@ -44,7 +47,8 @@ class AccelerometerService : Service(), SensorEventListener {
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
         // Inizializza il ViewModel per l'aggiornamento dei dati
-        viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(AccelerometerViewModel::class.java)
+        viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(
+            AccelerometerViewModel::class.java)
 
         // Registra il listener per l'accelerometro con un intervallo di 250 microsecondi
         accelerometer?.let {

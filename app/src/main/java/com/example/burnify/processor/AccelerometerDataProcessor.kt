@@ -1,6 +1,6 @@
-package com.example.burnify
+package com.example.burnify.processor
 
-import java.io.Serializable
+import com.example.burnify.model.AccelerometerMeasurements
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.sqrt

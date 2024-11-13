@@ -13,12 +13,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.burnify.ui.screens.ScreenContent
 import com.example.burnify.ui.theme.BurnifyTheme
+import com.example.burnify.viewmodel.AccelerometerViewModel
+import com.example.burnify.viewmodel.GyroscopeViewModel
 
 @Composable
-fun App(accelerometerViewModel: AccelerometerViewModel) {
+fun App(accelerometerViewModel: AccelerometerViewModel , gyroscopeViewModel: GyroscopeViewModel) {
     var selectedPage by remember { mutableStateOf("Today") }
 
     BurnifyTheme {
@@ -42,7 +44,7 @@ fun App(accelerometerViewModel: AccelerometerViewModel) {
                             .weight(1f) // Occupa lo spazio rimanente sopra la Navbar
                             .fillMaxWidth()
                     ) {
-                        ScreenContent(selectedPage = selectedPage, accelerometerViewModel = accelerometerViewModel)
+                        ScreenContent(selectedPage = selectedPage, accelerometerViewModel = accelerometerViewModel, gyroscopeViewModel = gyroscopeViewModel)
                     }
 
                     // Navbar sempre visibile in basso
