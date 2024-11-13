@@ -41,6 +41,9 @@
                 android:resource="@drawable/tile_preview" />
         </service>
 
+        <service android:name=".presentation.AccelerometerService" />
+
+
         <uses-library
             android:name="com.google.android.wearable"
             android:required="true" />

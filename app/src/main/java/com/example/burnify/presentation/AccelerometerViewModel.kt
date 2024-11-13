@@ -11,41 +11,61 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 class AccelerometerViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val accelerometerData = MutableLiveData<AccelerometerSample>() // Singolo campione
-    private val sensorManager: SensorManager =
-        application.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
-    private val sensorEventListener = object : SensorEventListener {
-        override fun onSensorChanged(event: SensorEvent) {
-            // Estrai i valori direttamente
-            val (x, y, z) = event.values
 
-            // Crea e aggiorna il campione
-            val sample = AccelerometerSample()
-            sample.setSample(x, y, z)
+    private val _accelerometerData = MutableLiveData<AccelerometerMeasurements>() // Singolo campione
 
-            // Posta il campione direttamente
-            accelerometerData.postValue(sample)
-        }
+    val accelerometerData : LiveData<AccelerometerMeasurements> get() = _accelerometerData
 
-        override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
+
+    fun updateAccelerometerData(accelerometerMeasurements: AccelerometerMeasurements){
+        _accelerometerData.postValue(accelerometerMeasurements)
+        //println(accelerometerData.value?.getSamples()?.lastOrNull()?.getX())
     }
 
-    init {
-        initializeAccelerometerListener()
-    }
 
-    private fun initializeAccelerometerListener() {
-        val accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-        accelerometerSensor?.let {
-            sensorManager.registerListener(sensorEventListener, it, 40 * 1000) // 40ms
-        }
-    }
 
-    override fun onCleared() {
-        super.onCleared()
-        sensorManager.unregisterListener(sensorEventListener)
-    }
 
-    fun getAccelerometerData(): LiveData<AccelerometerSample> = accelerometerData
+
+/*
+private val sensorManager: SensorManager =
+
+   application.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+
+
+privaval sensorEventListener = object : SensorEventListener {
+   override fun onSensorChanged(event: SensorEvent) {
+       // Estrai i valori direttamente
+       val (x, y, z) = event.values
+
+       // Crea e aggiorna il campione
+       val sample = AccelerometerSample()
+       sample.setSample(x, y, z)
+
+       // Posta il campione direttamente
+       accelerometerData.postValue(sample)
+   }
+
+   override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
+}
+
+init {
+   initializeAccelerometerListener()
+}
+
+private fun initializeAccelerometerListener() {
+   val accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+   accelerometerSensor?.let {
+       sensorManager.registerListener(sensorEventListener, it, 40 * 1000) // 40ms
+   }
+}
+
+override fun onCleared() {
+   super.onCleared()
+   sensorManager.unregisterListener(sensorEventListener)
+}
+
+fun getAccelerometerData(): LiveData<AccelerometerSample> = accelerometerData
+*/
+
 }

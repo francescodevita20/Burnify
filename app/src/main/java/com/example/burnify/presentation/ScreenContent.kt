@@ -7,11 +7,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun ScreenContent(
     selectedPage: String,
     accelerometerViewModel: AccelerometerViewModel = viewModel(),
-    compassViewModel: CompassViewModel = viewModel()
+    //compassViewModel: CompassViewModel = viewModel()
 ) {
     when (selectedPage) {
         "Today" -> TodayScreen()
-        "Data" -> DataScreen(accelerometerViewModel, compassViewModel)
+        "Data" -> DataScreen(accelerometerViewModel= accelerometerViewModel)
         "Settings" -> SettingsScreen()
         else -> NotFoundScreen()
     }

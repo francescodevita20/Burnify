@@ -1,5 +1,6 @@
 package com.example.burnify.presentation
 
+import java.io.Serializable
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -10,13 +11,11 @@ class AccelerometerDataProcessor {
 
     fun processMeasurements(measurements: AccelerometerMeasurements): Map<String, Any> {
         val samples = measurements.getSamples()
+        val xValues = samples.map { it.getSampleValues().first }
+        val yValues = samples.map { it.getSampleValues().second }
+        val zValues = samples.map { it.getSampleValues().third }
+        val magnitudes = samples.map { sqrt(it.getSampleValues().first.pow(2) + it.getSampleValues().second.pow(2) + it.getSampleValues().third.pow(2)) }
 
-        val xValues = samples.map { it.getX() }
-        val yValues = samples.map { it.getY() }
-        val zValues = samples.map { it.getZ() }
-        val magnitudes = samples.map { sqrt(it.getX().pow(2) + it.getY().pow(2) + it.getZ().pow(2)) }
-
-        // Ottieni la data e l'orario correnti
         val currentDateTime = LocalDateTime.now()
         val formattedDateTime = currentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
 
@@ -122,7 +121,10 @@ class AccelerometerDataProcessor {
 
     // Funzione che ritorna tutti i valori calcolati come stringa
     fun getResultsAsString(measurements: AccelerometerMeasurements): String {
+
+
         val results = processMeasurements(measurements)
+
         return buildString {
             results.forEach { (key, value) ->
                 appendLine("$key: $value")

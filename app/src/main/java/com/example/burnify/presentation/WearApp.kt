@@ -11,7 +11,7 @@ import com.example.burnify.presentation.theme.BurnifyTheme
 
 
 @Composable
-fun WearApp() {
+fun WearApp(accelerometerViewModel: AccelerometerViewModel) {
     var selectedPage by remember { mutableStateOf("Today") }
 
     BurnifyTheme {
@@ -30,7 +30,7 @@ fun WearApp() {
                         .weight(1f) // Occupa lo spazio rimanente sopra la Navbar
                         .fillMaxWidth()
                 ) {
-                    ScreenContent(selectedPage = selectedPage)
+                    ScreenContent(selectedPage = selectedPage, accelerometerViewModel = accelerometerViewModel)
                 }
 
                 // Navbar sempre visibile in basso
