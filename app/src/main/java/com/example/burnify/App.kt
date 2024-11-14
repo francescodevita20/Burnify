@@ -18,9 +18,10 @@ import com.example.burnify.ui.screens.ScreenContent
 import com.example.burnify.ui.theme.BurnifyTheme
 import com.example.burnify.viewmodel.AccelerometerViewModel
 import com.example.burnify.viewmodel.GyroscopeViewModel
+import com.example.burnify.viewmodel.MagnetometerViewModel
 
 @Composable
-fun App(accelerometerViewModel: AccelerometerViewModel , gyroscopeViewModel: GyroscopeViewModel) {
+fun App(accelerometerViewModel: AccelerometerViewModel , gyroscopeViewModel: GyroscopeViewModel,magnetometerViewModel: MagnetometerViewModel) {
     var selectedPage by remember { mutableStateOf("Today") }
 
     BurnifyTheme {
@@ -44,7 +45,7 @@ fun App(accelerometerViewModel: AccelerometerViewModel , gyroscopeViewModel: Gyr
                             .weight(1f) // Occupa lo spazio rimanente sopra la Navbar
                             .fillMaxWidth()
                     ) {
-                        ScreenContent(selectedPage = selectedPage, accelerometerViewModel = accelerometerViewModel, gyroscopeViewModel = gyroscopeViewModel)
+                        ScreenContent(selectedPage = selectedPage, accelerometerViewModel = accelerometerViewModel, gyroscopeViewModel = gyroscopeViewModel, magnetometerViewModel = magnetometerViewModel)
                     }
 
                     // Navbar sempre visibile in basso

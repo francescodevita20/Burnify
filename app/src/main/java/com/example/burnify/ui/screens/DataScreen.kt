@@ -24,25 +24,29 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.burnify.model.AccelerometerMeasurements
-import com.example.burnify.model.GyroscopeMeasurements  // Importa il modello per il giroscopio
+import com.example.burnify.model.GyroscopeMeasurements
+import com.example.burnify.model.MagnetometerMeasurements // Importa il modello per il magnetometro
 import com.example.burnify.viewmodel.AccelerometerViewModel
 import com.example.burnify.viewmodel.GyroscopeViewModel
+import com.example.burnify.viewmodel.MagnetometerViewModel // Importa il ViewModel per il magnetometro
 
 @Composable
 fun DataScreen(
     accelerometerViewModel: AccelerometerViewModel,
-    gyroscopeViewModel: GyroscopeViewModel
+    gyroscopeViewModel: GyroscopeViewModel,
+    magnetometerViewModel: MagnetometerViewModel // ViewModel per il magnetometro
 ) {
     val accelerometerData by accelerometerViewModel.accelerometerData.observeAsState()
-    val gyroscopeData by gyroscopeViewModel.gyroscopeData.observeAsState()  // Osserva i dati del giroscopio
+    val gyroscopeData by gyroscopeViewModel.gyroscopeData.observeAsState()
+    val magnetometerData by magnetometerViewModel.magnetometerData.observeAsState() // Osserva i dati del magnetometro
 
-    // Manteniamo variabili per la ricezione dei dati dal broadcast
     var accelerometerDataReceived by remember { mutableStateOf<AccelerometerMeasurements?>(null) }
     var gyroscopeDataReceived by remember { mutableStateOf<GyroscopeMeasurements?>(null) }
+    var magnetometerDataReceived by remember { mutableStateOf<MagnetometerMeasurements?>(null) } // Variabile per i dati del magnetometro
 
-    // Registriamo un BroadcastReceiver per ricevere i dati dal servizio dell'accelerometro
     val context = LocalContext.current
 
+    // BroadcastReceiver per i dati dell'accelerometro
     val accelerometerReceiver = remember {
         object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
@@ -54,7 +58,7 @@ fun DataScreen(
         }
     }
 
-    // Registriamo un BroadcastReceiver per ricevere i dati dal servizio del giroscopio
+    // BroadcastReceiver per i dati del giroscopio
     val gyroscopeReceiver = remember {
         object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
@@ -66,28 +70,32 @@ fun DataScreen(
         }
     }
 
-    // La registrazione dei receivers avviene all'interno di DisposableEffect per evitare perdite di memoria
+    // BroadcastReceiver per i dati del magnetometro
+    val magnetometerReceiver = remember {
+        object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                intent?.let {
+                    val data = it.getParcelableExtra("data") as? MagnetometerMeasurements
+                    magnetometerDataReceived = data
+                }
+            }
+        }
+    }
+
+    // Registrazione dei BroadcastReceiver
     DisposableEffect(context) {
         val accelerometerFilter = IntentFilter("com.example.burnify.ACCELEROMETER_DATA")
         val gyroscopeFilter = IntentFilter("com.example.burnify.GYROSCOPE_DATA")
+        val magnetometerFilter = IntentFilter("com.example.burnify.MAGNETOMETER_DATA") // Intent filter per il magnetometro
 
-        // Registrazione dinamica con flag appropriato
-        context.registerReceiver(
-            accelerometerReceiver,
-            accelerometerFilter,
-            Context.RECEIVER_EXPORTED // A partire da Android 12, aggiungi questo flag
-        )
+        context.registerReceiver(accelerometerReceiver, accelerometerFilter, Context.RECEIVER_EXPORTED)
+        context.registerReceiver(gyroscopeReceiver, gyroscopeFilter, Context.RECEIVER_EXPORTED)
+        context.registerReceiver(magnetometerReceiver, magnetometerFilter, Context.RECEIVER_EXPORTED) // Registra il receiver per il magnetometro
 
-        context.registerReceiver(
-            gyroscopeReceiver,
-            gyroscopeFilter,
-            Context.RECEIVER_EXPORTED // A partire da Android 12, aggiungi questo flag
-        )
-
-        // Cleanup: deregistra i receivers quando non sono più necessari
         onDispose {
             context.unregisterReceiver(accelerometerReceiver)
             context.unregisterReceiver(gyroscopeReceiver)
+            context.unregisterReceiver(magnetometerReceiver) // Deregistra il receiver per il magnetometro
         }
     }
 
@@ -102,11 +110,11 @@ fun DataScreen(
         Text(
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.primary, // Usa colorScheme per Material3
+            color = MaterialTheme.colorScheme.primary,
             text = "Data content"
         )
 
-        // Se i dati accelerometro sono stati ricevuti, mostriamo i dettagli
+        // Dati dell'accelerometro
         accelerometerDataReceived?.let { sample ->
             Text(
                 modifier = Modifier.fillMaxWidth(),
@@ -114,8 +122,6 @@ fun DataScreen(
                 color = MaterialTheme.colorScheme.primary,
                 text = "Accelerometer Data:\n Samples: ${sample.getSamples().size}"
             )
-
-            // Mostra il valore dell'ultimo campione
             val accelerometerSampleValues = sample.getLastSample()?.getSampleValues() ?: "No data"
             Text(
                 modifier = Modifier.fillMaxWidth(),
@@ -132,7 +138,7 @@ fun DataScreen(
             )
         }
 
-        // Se i dati giroscopio sono stati ricevuti, mostriamo i dettagli
+        // Dati del giroscopio
         gyroscopeDataReceived?.let { sample ->
             Text(
                 modifier = Modifier.fillMaxWidth(),
@@ -140,8 +146,6 @@ fun DataScreen(
                 color = MaterialTheme.colorScheme.primary,
                 text = "Gyroscope Data:\n Samples: ${sample.getSamples().size}"
             )
-
-            // Mostra il valore dell'ultimo campione
             val gyroscopeSampleValues = sample.getLastSample()?.getSampleValues() ?: "No data"
             Text(
                 modifier = Modifier.fillMaxWidth(),
@@ -155,6 +159,30 @@ fun DataScreen(
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.primary,
                 text = "Loading gyroscope data..."
+            )
+        }
+
+        // Dati del magnetometro
+        magnetometerDataReceived?.let { sample ->
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.primary,
+                text = "Magnetometer Data:\n Samples: ${sample.getSamples().size}"
+            )
+            val magnetometerSampleValues = sample.getLastSample()?.getSampleValues() ?: "No data"
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.primary,
+                text = "Last Magnetometer Sample: $magnetometerSampleValues"
+            )
+        } ?: run {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.primary,
+                text = "Loading magnetometer data..."
             )
         }
     }
