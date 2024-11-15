@@ -21,7 +21,8 @@ class MagnetometerService : Service(), SensorEventListener {
     private val sensorManager: SensorManager by lazy {
         getSystemService(Context.SENSOR_SERVICE) as SensorManager
     }
-
+    private val sample = MagnetometerSample()
+    private val samplesBatch = 20
     // Magnetometer sensor instance
     private val magnetometer: Sensor? by lazy {
         sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
@@ -76,19 +77,23 @@ class MagnetometerService : Service(), SensorEventListener {
         }
         sendBroadcast(intent)
     }
-
+private var samplesCount = 0
     // Called when sensor data changes
     override fun onSensorChanged(event: SensorEvent?) {
         event?.let {
             if (it.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
                 // Reuse an existing sample to reduce object creation
-                val sample = MagnetometerSample().apply {
-                    setSample(it.values[0], it.values[1], it.values[2])
-                }
+
+                    sample.setSample(it.values[0], it.values[1], it.values[2])
+
                 magnetometerData.addSample(sample)
 
-                // Send the data via broadcast
-                sendMagnetometerData()
+                samplesCount++
+                // Invia i dati tramite broadcast
+                if(samplesCount >= samplesBatch){
+                    sendMagnetometerData()
+                    samplesCount = 0}
+
             }
         }
     }

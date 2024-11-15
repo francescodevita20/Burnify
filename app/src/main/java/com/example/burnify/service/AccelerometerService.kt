@@ -15,100 +15,112 @@ import com.example.burnify.model.AccelerometerMeasurements
 import com.example.burnify.model.AccelerometerSample
 import com.example.burnify.viewmodel.AccelerometerViewModel
 
+
 class AccelerometerService : Service(), SensorEventListener {
 
-    // SensorManager to access system sensors
-    private val sensorManager: SensorManager by lazy {
-        getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    }
+    // SensorManager per accedere ai sensori di sistema
+    private lateinit var sensorManager: SensorManager
+    private val samplesBatch = 20
+    // Sensore per l'accelerometro
+    private var accelerometer: Sensor? = null
 
-    // Accelerometer sensor instance
-    private val accelerometer: Sensor? by lazy {
-        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-    }
+    // Intervallo di campionamento in millisecondi
+    private val samplingInterval: Long = 250
 
-    // Sampling interval in milliseconds
-    private val samplingInterval: Long = 250L
-
-    // Container for accelerometer data
+    // Contenitore per i dati dell'accelerometro
     private val accelerometerData = AccelerometerMeasurements()
 
-    // Handler for periodic updates
-    private val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
-
-    // ViewModel to manage accelerometer data
+    // Handler per gestire il post-delay e aggiornare i dati periodicamente
+    private val handler = Handler(Looper.getMainLooper())
+    private val sample = AccelerometerSample()
+    // ViewModel per gestire i dati dell'accelerometro
     private lateinit var viewModel: AccelerometerViewModel
 
+    // Metodo di inizializzazione del servizio
     override fun onCreate() {
         super.onCreate()
+        println("Servizio Inizializzato")
+        // Inizializza il SensorManager
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
-        // Initialize the ViewModel for data management
+        // Ottiene il sensore dell'accelerometro
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+        // Inizializza il ViewModel per l'aggiornamento dei dati
         viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(
-            AccelerometerViewModel::class.java
-        )
+            AccelerometerViewModel::class.java)
 
-        // Register the sensor listener if the accelerometer is available
+        // Registra il listener per l'accelerometro con un intervallo di 250 microsecondi
         accelerometer?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
+            sensorManager.registerListener(this, it, 1000*250)
         }
 
-        // Start periodic data collection
+        // Avvia la raccolta periodica dei dati
         startDataCollection()
     }
 
-    // Starts periodic data collection, updating every `samplingInterval` milliseconds
+    // Avvia la raccolta periodica dei dati, eseguendo l'aggiornamento ogni "samplingInterval" millisecondi
     private fun startDataCollection() {
         handler.postDelayed(object : Runnable {
             override fun run() {
-                // Update ViewModel with the latest accelerometer data
+                // Aggiorna i dati dell'accelerometro nel ViewModel
                 viewModel.updateAccelerometerData(accelerometerData)
 
-                // Reschedule the next update
+                // Ripianifica l'aggiornamento
                 handler.postDelayed(this, samplingInterval)
             }
         }, samplingInterval)
     }
 
-    // Sends accelerometer data via broadcast
+    // Metodo per inviare i dati tramite un broadcast
     private fun sendAccelerometerData() {
-        val intent = Intent("com.example.burnify.ACCELEROMETER_DATA").apply {
-            putExtra("data", accelerometerData) // Include accelerometer data
-        }
+        val intent = Intent("com.example.burnify.ACCELEROMETER_DATA")
+        intent.putExtra("data", accelerometerData) // Dati dell'accelerometro da inviare
         sendBroadcast(intent)
     }
-
-    // Called when sensor data changes
+    private var samplesCount = 0
+    // Metodo richiamato quando i dati del sensore cambiano
     override fun onSensorChanged(event: SensorEvent?) {
+
         event?.let {
             if (it.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-                // Reuse an existing object to reduce object creation
-                val sample = AccelerometerSample().apply {
-                    setSample(it.values[0], it.values[1], it.values[2])
-                }
+
+
+                sample.setSample(it.values[0], it.values[1], it.values[2])
+
+
                 accelerometerData.addSample(sample)
 
-                // Send data via broadcast
+
+                samplesCount++
+                // Invia i dati tramite broadcast
+                if(samplesCount >= samplesBatch){
                 sendAccelerometerData()
+                    samplesCount = 0}
             }
         }
     }
 
-    // Called when the service is destroyed
+
+    // Metodo richiamato quando il servizio viene distrutto
     override fun onDestroy() {
         super.onDestroy()
 
-        // Unregister the sensor listener to free resources
+        // Deregistra il listener del sensore per risparmiare risorse
         sensorManager.unregisterListener(this)
 
-        // Remove all callbacks and messages from the handler
+        // Rimuove tutti i callback e i messaggi dall'handler
         handler.removeCallbacksAndMessages(null)
     }
 
-    // Not used in this example
+    // Metodo richiamato quando cambia la precisione del sensore (non utilizzato in questo esempio)
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        // No action needed
+        // Nessuna azione necessaria per questo esempio
     }
 
-    // Not used in this example
+    // Metodo per il binding del servizio (non utilizzato, quindi restituisce null)
     override fun onBind(intent: Intent?): IBinder? = null
+
+
+
 }

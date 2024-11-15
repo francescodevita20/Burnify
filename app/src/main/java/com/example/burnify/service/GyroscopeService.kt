@@ -21,7 +21,9 @@ class GyroscopeService : Service(), SensorEventListener {
     private val sensorManager: SensorManager by lazy {
         getSystemService(Context.SENSOR_SERVICE) as SensorManager
     }
+    private val samplesBatch = 20
 
+    private val sample = GyroscopeSample()
     // Gyroscope sensor instance
     private val gyroscope: Sensor? by lazy {
         sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
@@ -76,22 +78,25 @@ class GyroscopeService : Service(), SensorEventListener {
         }
         sendBroadcast(intent)
     }
-
+private var samplesCount = 0
     // Called when sensor data changes
     override fun onSensorChanged(event: SensorEvent?) {
         event?.let {
             if (it.sensor.type == Sensor.TYPE_GYROSCOPE) {
                 // Reuse an existing sample to reduce object creation
-                val sample = GyroscopeSample().apply {
-                    setSample(it.values[0], it.values[1], it.values[2])
-                }
+                    sample.setSample(it.values[0], it.values[1], it.values[2])
+
                 gyroscopeData.addSample(sample)
 
-                // Send the data via broadcast
-                sendGyroscopeData()
+                samplesCount++
+                // Invia i dati tramite broadcast
+                if(samplesCount >= samplesBatch){
+                    sendGyroscopeData()
+                    samplesCount = 0}
+            }
             }
         }
-    }
+
 
     // Called when the service is destroyed
     override fun onDestroy() {
