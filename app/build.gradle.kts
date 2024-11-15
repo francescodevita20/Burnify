@@ -42,9 +42,10 @@ android {
 dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.5") // Usa la versione più recente
     implementation("androidx.compose.material3:material3:1.3.1") // Usa la versione di Material 3
-    dependencies {
-        implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7") // O l'ultima versione disponibile
-    }
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7") // O l'ultima versione disponibile
+        // debugImplementation because LeakCanary should only run in debug builds.
+        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
+
 
 
 

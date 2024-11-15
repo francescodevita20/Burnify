@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -23,6 +24,7 @@ import com.example.burnify.model.MagnetometerMeasurements
 import com.example.burnify.viewmodel.AccelerometerViewModel
 import com.example.burnify.viewmodel.GyroscopeViewModel
 import com.example.burnify.viewmodel.MagnetometerViewModel
+
 @Composable
 fun DataScreen(
     accelerometerViewModel: AccelerometerViewModel,
@@ -31,10 +33,10 @@ fun DataScreen(
 ) {
     val context = LocalContext.current
 
-    // State variables for sensor data
-    var accelerometerData by remember { mutableStateOf<AccelerometerMeasurements?>(null) }
-    var gyroscopeData by remember { mutableStateOf<GyroscopeMeasurements?>(null) }
-    var magnetometerData by remember { mutableStateOf<MagnetometerMeasurements?>(null) }
+    // Osserva i dati direttamente dai ViewModel
+    val accelerometerData by accelerometerViewModel.accelerometerData.observeAsState()
+    val gyroscopeData by gyroscopeViewModel.gyroscopeData.observeAsState()
+    val magnetometerData by magnetometerViewModel.magnetometerData.observeAsState()
 
     // Register BroadcastReceivers
     DisposableEffect(context) {
@@ -49,15 +51,21 @@ fun DataScreen(
 
         // Create receivers for each sensor
         val accelerometerReceiver = createReceiver { intent ->
-            accelerometerData = intent?.getParcelableExtra("data")
+            intent?.getParcelableExtra<AccelerometerMeasurements>("data")?.let {
+                accelerometerViewModel.updateAccelerometerData(it)
+            }
         }
 
         val gyroscopeReceiver = createReceiver { intent ->
-            gyroscopeData = intent?.getParcelableExtra("data")
+            intent?.getParcelableExtra<GyroscopeMeasurements>("data")?.let {
+                gyroscopeViewModel.updateGyroscopeData(it)
+            }
         }
 
         val magnetometerReceiver = createReceiver { intent ->
-            magnetometerData = intent?.getParcelableExtra("data")
+            intent?.getParcelableExtra<MagnetometerMeasurements>("data")?.let {
+                magnetometerViewModel.updateMagnetometerData(it)
+            }
         }
 
         // Register receivers with filters
@@ -121,7 +129,7 @@ fun DataScreen(
             }
         }
 
-        // Display each sensor's data
+        // Display each sensor's data using ViewModel
         displaySensorData(
             title = "Accelerometer Data",
             data = accelerometerData?.getSamples(),
