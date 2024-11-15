@@ -12,94 +12,71 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.burnify.model.AccelerometerMeasurements
 import com.example.burnify.model.GyroscopeMeasurements
-import com.example.burnify.model.MagnetometerMeasurements // Importa il modello per il magnetometro
+import com.example.burnify.model.MagnetometerMeasurements
 import com.example.burnify.viewmodel.AccelerometerViewModel
 import com.example.burnify.viewmodel.GyroscopeViewModel
-import com.example.burnify.viewmodel.MagnetometerViewModel // Importa il ViewModel per il magnetometro
-
+import com.example.burnify.viewmodel.MagnetometerViewModel
 @Composable
 fun DataScreen(
     accelerometerViewModel: AccelerometerViewModel,
     gyroscopeViewModel: GyroscopeViewModel,
-    magnetometerViewModel: MagnetometerViewModel // ViewModel per il magnetometro
+    magnetometerViewModel: MagnetometerViewModel
 ) {
-    val accelerometerData by accelerometerViewModel.accelerometerData.observeAsState()
-    val gyroscopeData by gyroscopeViewModel.gyroscopeData.observeAsState()
-    val magnetometerData by magnetometerViewModel.magnetometerData.observeAsState() // Osserva i dati del magnetometro
-
-    var accelerometerDataReceived by remember { mutableStateOf<AccelerometerMeasurements?>(null) }
-    var gyroscopeDataReceived by remember { mutableStateOf<GyroscopeMeasurements?>(null) }
-    var magnetometerDataReceived by remember { mutableStateOf<MagnetometerMeasurements?>(null) } // Variabile per i dati del magnetometro
-
     val context = LocalContext.current
 
-    // BroadcastReceiver per i dati dell'accelerometro
-    val accelerometerReceiver = remember {
-        object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                intent?.let {
-                    val data = it.getParcelableExtra("data") as? AccelerometerMeasurements
-                    accelerometerDataReceived = data
-                }
-            }
-        }
-    }
+    // State variables for sensor data
+    var accelerometerData by remember { mutableStateOf<AccelerometerMeasurements?>(null) }
+    var gyroscopeData by remember { mutableStateOf<GyroscopeMeasurements?>(null) }
+    var magnetometerData by remember { mutableStateOf<MagnetometerMeasurements?>(null) }
 
-    // BroadcastReceiver per i dati del giroscopio
-    val gyroscopeReceiver = remember {
-        object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                intent?.let {
-                    val data = it.getParcelableExtra("data") as? GyroscopeMeasurements
-                    gyroscopeDataReceived = data
-                }
-            }
-        }
-    }
-
-    // BroadcastReceiver per i dati del magnetometro
-    val magnetometerReceiver = remember {
-        object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                intent?.let {
-                    val data = it.getParcelableExtra("data") as? MagnetometerMeasurements
-                    magnetometerDataReceived = data
-                }
-            }
-        }
-    }
-
-    // Registrazione dei BroadcastReceiver
+    // Register BroadcastReceivers
     DisposableEffect(context) {
-        val accelerometerFilter = IntentFilter("com.example.burnify.ACCELEROMETER_DATA")
-        val gyroscopeFilter = IntentFilter("com.example.burnify.GYROSCOPE_DATA")
-        val magnetometerFilter = IntentFilter("com.example.burnify.MAGNETOMETER_DATA") // Intent filter per il magnetometro
+        // Function to create a generic receiver
+        fun createReceiver(onReceive: (Intent?) -> Unit): BroadcastReceiver {
+            return object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    onReceive(intent)
+                }
+            }
+        }
 
-        context.registerReceiver(accelerometerReceiver, accelerometerFilter, Context.RECEIVER_EXPORTED)
-        context.registerReceiver(gyroscopeReceiver, gyroscopeFilter, Context.RECEIVER_EXPORTED)
-        context.registerReceiver(magnetometerReceiver, magnetometerFilter, Context.RECEIVER_EXPORTED) // Registra il receiver per il magnetometro
+        // Create receivers for each sensor
+        val accelerometerReceiver = createReceiver { intent ->
+            accelerometerData = intent?.getParcelableExtra("data")
+        }
+
+        val gyroscopeReceiver = createReceiver { intent ->
+            gyroscopeData = intent?.getParcelableExtra("data")
+        }
+
+        val magnetometerReceiver = createReceiver { intent ->
+            magnetometerData = intent?.getParcelableExtra("data")
+        }
+
+        // Register receivers with filters
+        val filters = mapOf(
+            accelerometerReceiver to IntentFilter("com.example.burnify.ACCELEROMETER_DATA"),
+            gyroscopeReceiver to IntentFilter("com.example.burnify.GYROSCOPE_DATA"),
+            magnetometerReceiver to IntentFilter("com.example.burnify.MAGNETOMETER_DATA")
+        )
+
+        filters.forEach { (receiver, filter) ->
+            context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
+        }
 
         onDispose {
-            context.unregisterReceiver(accelerometerReceiver)
-            context.unregisterReceiver(gyroscopeReceiver)
-            context.unregisterReceiver(magnetometerReceiver) // Deregistra il receiver per il magnetometro
+            filters.keys.forEach { context.unregisterReceiver(it) }
         }
     }
 
-    // UI per mostrare i dati
+    // UI Layout
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -111,79 +88,56 @@ fun DataScreen(
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.primary,
-            text = "Data content"
+            text = "Sensor Data"
         )
 
-        // Dati dell'accelerometro
-        accelerometerDataReceived?.let { sample ->
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary,
-                text = "Accelerometer Data:\n Samples: ${sample.getSamples().size}"
-            )
-            val accelerometerSampleValues = sample.getLastSample()?.getSampleValues() ?: "No data"
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary,
-                text = "Last Accelerometer Sample: $accelerometerSampleValues"
-            )
-        } ?: run {
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary,
-                text = "Loading accelerometer data..."
-            )
+        // Generic function for displaying sensor data
+        @Composable
+        fun displaySensorData(
+            title: String,
+            data: Any?,
+            lastSample: () -> String
+        ) {
+            if (data != null) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.primary,
+                    text = "$title:\n Samples: ${(data as? List<*>)?.size ?: "Unknown"}"
+                )
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.primary,
+                    text = "Last Sample: ${lastSample()}"
+                )
+            } else {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.primary,
+                    text = "Loading $title data..."
+                )
+            }
         }
 
-        // Dati del giroscopio
-        gyroscopeDataReceived?.let { sample ->
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary,
-                text = "Gyroscope Data:\n Samples: ${sample.getSamples().size}"
-            )
-            val gyroscopeSampleValues = sample.getLastSample()?.getSampleValues() ?: "No data"
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary,
-                text = "Last Gyroscope Sample: $gyroscopeSampleValues"
-            )
-        } ?: run {
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary,
-                text = "Loading gyroscope data..."
-            )
-        }
+        // Display each sensor's data
+        displaySensorData(
+            title = "Accelerometer Data",
+            data = accelerometerData?.getSamples(),
+            lastSample = { accelerometerData?.getLastSample()?.getSampleValues().toString() ?: "No data" }
+        )
 
-        // Dati del magnetometro
-        magnetometerDataReceived?.let { sample ->
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary,
-                text = "Magnetometer Data:\n Samples: ${sample.getSamples().size}"
-            )
-            val magnetometerSampleValues = sample.getLastSample()?.getSampleValues() ?: "No data"
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary,
-                text = "Last Magnetometer Sample: $magnetometerSampleValues"
-            )
-        } ?: run {
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary,
-                text = "Loading magnetometer data..."
-            )
-        }
+        displaySensorData(
+            title = "Gyroscope Data",
+            data = gyroscopeData?.getSamples(),
+            lastSample = { gyroscopeData?.getLastSample()?.getSampleValues().toString() ?: "No data" }
+        )
+
+        displaySensorData(
+            title = "Magnetometer Data",
+            data = magnetometerData?.getSamples(),
+            lastSample = { magnetometerData?.getLastSample()?.getSampleValues().toString() ?: "No data" }
+        )
     }
 }

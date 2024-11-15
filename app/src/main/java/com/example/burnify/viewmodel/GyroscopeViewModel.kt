@@ -10,7 +10,6 @@ class GyroscopeViewModel(application: Application) : AndroidViewModel(applicatio
 
     // LiveData per i dati del giroscopio
     private val _gyroscopeData = MutableLiveData<GyroscopeMeasurements>()
-
     val gyroscopeData: LiveData<GyroscopeMeasurements> get() = _gyroscopeData
 
     // Funzione per aggiornare i dati del giroscopio

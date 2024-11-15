@@ -1,6 +1,5 @@
 package com.example.burnify.service
 
-
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -18,91 +17,98 @@ import com.example.burnify.viewmodel.MagnetometerViewModel
 
 class MagnetometerService : Service(), SensorEventListener {
 
-    // SensorManager per accedere ai sensori di sistema
-    private lateinit var sensorManager: SensorManager
+    // SensorManager to access system sensors
+    private val sensorManager: SensorManager by lazy {
+        getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    }
 
-    // Sensore per il magnetometro
-    private var magnetometer: Sensor? = null
+    // Magnetometer sensor instance
+    private val magnetometer: Sensor? by lazy {
+        sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+    }
 
-    // Intervallo di campionamento in millisecondi
-    private val samplingInterval: Long = 250
+    // Sampling interval in milliseconds
+    private val samplingInterval: Long = 250L
 
-    // Contenitore per i dati del magnetometro
+    // Container for magnetometer data
     private val magnetometerData = MagnetometerMeasurements()
 
-    // Handler per gestire il post-delay e aggiornare i dati periodicamente
-    private val handler = Handler(Looper.getMainLooper())
+    // Handler for periodic updates
+    private val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
 
-    // ViewModel per gestire i dati del magnetometro
+    // ViewModel to manage magnetometer data
     private lateinit var viewModel: MagnetometerViewModel
 
     override fun onCreate() {
         super.onCreate()
-        println("Servizio Magnetometro Inizializzato")
 
-        // Inizializza il SensorManager
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        // Initialize the ViewModel
+        viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(
+            MagnetometerViewModel::class.java
+        )
 
-        // Ottiene il sensore del magnetometro
-        magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
-
-        // Inizializza il ViewModel per l'aggiornamento dei dati
-        viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(MagnetometerViewModel::class.java)
-
-        // Registra il listener per il magnetometro con un intervallo di 250 microsecondi
+        // Register the magnetometer listener if available
         magnetometer?.let {
-            sensorManager.registerListener(this, it, 1000 * 250)
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
         }
 
-        // Avvia la raccolta periodica dei dati
+        // Start periodic data collection
         startDataCollection()
     }
 
+    // Start periodic data collection
     private fun startDataCollection() {
         handler.postDelayed(object : Runnable {
             override fun run() {
-                // Aggiorna i dati del magnetometro nel ViewModel
+                // Update the ViewModel with magnetometer data
                 viewModel.updateMagnetometerData(magnetometerData)
 
-                // Ripianifica l'aggiornamento
+                // Schedule the next update
                 handler.postDelayed(this, samplingInterval)
             }
         }, samplingInterval)
     }
 
-    // Metodo per inviare i dati tramite un broadcast
+    // Send magnetometer data via broadcast
     private fun sendMagnetometerData() {
-        val intent = Intent("com.example.burnify.MAGNETOMETER_DATA")
-        intent.putExtra("data", magnetometerData) // Dati del magnetometro da inviare
+        val intent = Intent("com.example.burnify.MAGNETOMETER_DATA").apply {
+            putExtra("data", magnetometerData) // Include magnetometer data
+        }
         sendBroadcast(intent)
     }
 
+    // Called when sensor data changes
     override fun onSensorChanged(event: SensorEvent?) {
         event?.let {
             if (it.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
-                val sample = MagnetometerSample()
-                sample.setSample(it.values[0], it.values[1], it.values[2])
+                // Reuse an existing sample to reduce object creation
+                val sample = MagnetometerSample().apply {
+                    setSample(it.values[0], it.values[1], it.values[2])
+                }
                 magnetometerData.addSample(sample)
 
-                // Invia i dati tramite broadcast
+                // Send the data via broadcast
                 sendMagnetometerData()
             }
         }
     }
 
+    // Called when the service is destroyed
     override fun onDestroy() {
         super.onDestroy()
 
-        // Deregistra il listener del sensore per risparmiare risorse
+        // Unregister the sensor listener to free resources
         sensorManager.unregisterListener(this)
 
-        // Rimuove tutti i callback e i messaggi dall'handler
+        // Remove all callbacks and messages from the handler
         handler.removeCallbacksAndMessages(null)
     }
 
+    // Not used in this example
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        // Nessuna azione necessaria per questo esempio
+        // No action needed
     }
 
+    // Not used in this example
     override fun onBind(intent: Intent?): IBinder? = null
 }
