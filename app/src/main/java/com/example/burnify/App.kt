@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.burnify.ui.components.Navbar
 import com.example.burnify.ui.screens.ScreenContent
 import com.example.burnify.ui.theme.BurnifyTheme
 import com.example.burnify.viewmodel.AccelerometerViewModel
@@ -21,7 +22,7 @@ import com.example.burnify.viewmodel.GyroscopeViewModel
 import com.example.burnify.viewmodel.MagnetometerViewModel
 
 @Composable
-fun App(accelerometerViewModel: AccelerometerViewModel , gyroscopeViewModel: GyroscopeViewModel,magnetometerViewModel: MagnetometerViewModel) {
+fun App(accelerometerViewModel: AccelerometerViewModel, gyroscopeViewModel: GyroscopeViewModel, magnetometerViewModel: MagnetometerViewModel) {
     var selectedPage by remember { mutableStateOf("Today") }
 
     BurnifyTheme {
@@ -45,39 +46,16 @@ fun App(accelerometerViewModel: AccelerometerViewModel , gyroscopeViewModel: Gyr
                             .weight(1f) // Occupa lo spazio rimanente sopra la Navbar
                             .fillMaxWidth()
                     ) {
-                        ScreenContent(selectedPage = selectedPage, accelerometerViewModel = accelerometerViewModel, gyroscopeViewModel = gyroscopeViewModel, magnetometerViewModel = magnetometerViewModel)
+                        ScreenContent(
+                            selectedPage = selectedPage,
+                            accelerometerViewModel = accelerometerViewModel,
+                            gyroscopeViewModel = gyroscopeViewModel,
+                            magnetometerViewModel = magnetometerViewModel
+                        )
                     }
 
                     // Navbar sempre visibile in basso
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        // Sostituisci `Navbar` con un layout di icone personalizzato
-                        IconButton(onClick = { selectedPage = "Today" }) {
-                            Icon(
-                                imageVector = Icons.Default.Today,
-                                contentDescription = "Today",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        IconButton(onClick = { selectedPage = "Data" }) {
-                            Icon(
-                                imageVector = Icons.Default.DateRange,
-                                contentDescription = "Data",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        IconButton(onClick = { selectedPage = "Settings" }) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "Settings",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
+                    Navbar(onPageSelected = { selectedPage = it })
                 }
             }
         }
