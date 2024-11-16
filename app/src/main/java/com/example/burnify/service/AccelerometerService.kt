@@ -89,7 +89,7 @@ class AccelerometerService : Service(), SensorEventListener {
                 sample.setSample(it.values[0], it.values[1], it.values[2])
 
 
-                accelerometerData.addSample(sample)
+                accelerometerData.addSample(context = applicationContext,sample = sample)
 
 
                 samplesCount++

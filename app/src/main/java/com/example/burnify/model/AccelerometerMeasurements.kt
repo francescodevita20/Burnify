@@ -1,7 +1,11 @@
 package com.example.burnify.model
+import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
+import com.example.burnify.clearSharedPreferences
+import com.example.burnify.setSharedPreferences
 import com.example.burnify.processor.AccelerometerDataProcessor
+import com.example.burnify.getSharedPreferences
 
 class AccelerometerSample() : Parcelable {
     var x: Float = 0f
@@ -75,6 +79,7 @@ class AccelerometerMeasurements : Parcelable {
     private var samplesCount = 0
     private var maxSize = 500
     private val accelerometerDataProcessor = AccelerometerDataProcessor()
+
     // Costruttore vuoto per Parcelable
     constructor()
 
@@ -98,29 +103,55 @@ class AccelerometerMeasurements : Parcelable {
         return 0
     }
 
-    // Metodo per aggiungere un campione
-    fun addSample(sample: AccelerometerSample) {
-
+    fun addSample(sample: AccelerometerSample, context: Context) {
 
         samplesCount += 1
 
-        // Se la lista è piena, processa i dati e svuota la lista
-        if (isFull()) {
+        // Aggiungi il nuovo campione
+        samples.add(sample)
 
+        // Se la lista è piena, processa i dati e salva nelle SharedPreferences
+        if (isFull()) {
             println("Elaborazione in corso...")
             try {
-                println(accelerometerDataProcessor.processMeasurements(this))
+                // Processa i dati
+                val processedData = accelerometerDataProcessor.processMeasurements(this)
+                println("Dati processati: $processedData")
+
+                // Salva i dati processati in SharedPreferences
+                setSharedPreferences(context, processedData)
+
             } catch (e: Exception) {
                 println("Errore durante l'elaborazione: ${e.message}")
             }
 
 
-            samples.clear() // Svuota la lista dei campioni
-            samplesCount = 0 // Reset del conteggio dei campioni
-        }
 
-        samples.add(sample) // Aggiunge il nuovo campione alla lista
+
+            // Svuota la lista dei campioni
+            samples.clear()
+
+
+
+            val processedDataSaved = getSharedPreferences(context)
+            if (processedDataSaved != null) {
+                print("Dati recuperati: ")
+                var count=0;
+                for (data in processedDataSaved) {
+                    count++
+                    println("Campione $count: $data")
+                }
+            } else {
+                println("Nessun dato processato disponibile.")
+            }
+
+
+            samplesCount = 0
+        }
     }
+
+
+
 
     // Metodo per ottenere tutti i campioni
     fun getSamples(): List<AccelerometerSample> {
