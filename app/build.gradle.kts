@@ -44,7 +44,9 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.3.1") // Usa la versione di Material 3
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7") // O l'ultima versione disponibile
         // debugImplementation because LeakCanary should only run in debug builds.
-        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
+    implementation ("com.google.code.gson:gson:2.10.1") // Aggiungi questa dipendenza
+
 
 
 
