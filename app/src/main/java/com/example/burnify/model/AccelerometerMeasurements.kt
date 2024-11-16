@@ -104,7 +104,6 @@ class AccelerometerMeasurements : Parcelable {
     }
 
     fun addSample(sample: AccelerometerSample, context: Context) {
-
         samplesCount += 1
 
         // Aggiungi il nuovo campione
@@ -119,7 +118,7 @@ class AccelerometerMeasurements : Parcelable {
                 println("Dati processati: $processedData")
 
                 // Salva i dati processati in SharedPreferences
-                setSharedPreferences(context, processedData)
+                setSharedPreferences(context, processedData,"AccelerometerProcessedData")
 
             } catch (e: Exception) {
                 println("Errore durante l'elaborazione: ${e.message}")
@@ -133,9 +132,8 @@ class AccelerometerMeasurements : Parcelable {
 
 
 
-            val processedDataSaved = getSharedPreferences(context)
+            val processedDataSaved = getSharedPreferences(context,"AccelerometerProcessedData")
             if (processedDataSaved != null) {
-                print("Dati recuperati: ")
                 var count=0;
                 for (data in processedDataSaved) {
                     count++

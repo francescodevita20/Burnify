@@ -7,14 +7,14 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import java.io.File
 
-fun setSharedPreferences(context: Context, newMap: Map<String, Any>) {
+fun setSharedPreferences(context: Context, newMap: Map<String, Any>,sharedPreferencesName: String) {
     try {
-        val sharedPreferences = context.getSharedPreferences("ProcessedDataPrefs", Context.MODE_PRIVATE)
+        val sharedPreferences = context.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
         // Recupera la lista esistente
         val gson = GsonBuilder().serializeSpecialFloatingPointValues().create()
-        val json = sharedPreferences.getString("processed_data_key", null)
+        val json = sharedPreferences.getString(sharedPreferencesName, null)
         val type = object : TypeToken<List<Map<String, Any>>>() {}.type
         val existingList: MutableList<Map<String, Any>> = if (json.isNullOrEmpty()) {
             mutableListOf() // Se non esiste, crea una nuova lista vuota
@@ -27,7 +27,7 @@ fun setSharedPreferences(context: Context, newMap: Map<String, Any>) {
 
         // Salva nuovamente la lista aggiornata
         val updatedJson = gson.toJson(existingList)
-        editor.putString("processed_data_key", updatedJson)
+        editor.putString(sharedPreferencesName, updatedJson)
         editor.apply()
 
         println("Mappa aggiunta e salvata correttamente nello SharedPreferences.")
@@ -39,10 +39,10 @@ fun setSharedPreferences(context: Context, newMap: Map<String, Any>) {
 
 
 
-fun getSharedPreferences(context: Context): List<Map<String, Any>>? {
+fun getSharedPreferences(context: Context,sharedPreferencesName: String): List<Map<String, Any>>? {
     return try {
-        val sharedPreferences = context.getSharedPreferences("ProcessedDataPrefs", Context.MODE_PRIVATE)
-        val json = sharedPreferences.getString("processed_data_key", null)
+        val sharedPreferences = context.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE)
+        val json = sharedPreferences.getString(sharedPreferencesName, null)
 
         if (json.isNullOrEmpty()) {
             println("Nessun dato trovato nelle SharedPreferences.")
@@ -51,7 +51,7 @@ fun getSharedPreferences(context: Context): List<Map<String, Any>>? {
             val gson = Gson()
             val type = object : TypeToken<List<Map<String, Any>>>() {}.type
             val listOfMaps: List<Map<String, Any>> = gson.fromJson(json, type)
-            println("Lista di mappe recuperata con successo.")
+            println("SharedPreferences: $sharedPreferencesName recuperata con successo.")
             return listOfMaps
         }
     } catch (e: Exception) {
@@ -61,15 +61,16 @@ fun getSharedPreferences(context: Context): List<Map<String, Any>>? {
 
 
 }
-fun clearSharedPreferences(context: Context) {
+fun clearSharedPreferences(context: Context,sharedPreferencesName: String) {
     try {
-        val sharedPreferences = context.getSharedPreferences("ProcessedDataPrefs", Context.MODE_PRIVATE)
+
+        val sharedPreferences = context.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
         editor.clear() // Cancella tutti i dati
         editor.apply()
 
-        println("SharedPreferences cancellate con successo.")
+        println("SharedPreferences: $sharedPreferencesName cancellate con successo.")
     } catch (e: Exception) {
         println("Errore durante la cancellazione delle SharedPreferences: ${e.message}")
     }
