@@ -1,7 +1,9 @@
 package com.example.burnify.activity
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -17,29 +19,47 @@ class MainActivity : ComponentActivity() {
 
     private val accelerometerViewModel: AccelerometerViewModel by viewModels()
     private val gyroscopeViewModel: GyroscopeViewModel by viewModels()
-    private val magnetometerViewModel: MagnetometerViewModel by viewModels() // ViewModel per il magnetometro
+    private val magnetometerViewModel: MagnetometerViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Avvio esplicito del servizio per l'accelerometro
-        val accelerometerServiceIntent = Intent(this, AccelerometerService::class.java)
-        startService(accelerometerServiceIntent)
+        // Mostra il dialogo che chiede all'utente di disabilitare l'ottimizzazione della batteria
+        showBatteryOptimizationDialog()
 
-        // Avvio esplicito del servizio per il giroscopio
+        // Altri servizi e logica di avvio dell'app
+        val accelerometerServiceIntent = Intent(this, AccelerometerService::class.java)
+        startForegroundService(accelerometerServiceIntent)
+
         val gyroscopeServiceIntent = Intent(this, GyroscopeService::class.java)
         startService(gyroscopeServiceIntent)
 
-        // Avvio esplicito del servizio per il magnetometro
-        val magnetometerServiceIntent = Intent(this, MagnetometerService::class.java) // Servizio per il magnetometro
-        startService(magnetometerServiceIntent)  // Avvia il servizio per il magnetometro
+        val magnetometerServiceIntent = Intent(this, MagnetometerService::class.java)
+        startService(magnetometerServiceIntent)
 
         setContent {
             App(
                 accelerometerViewModel = accelerometerViewModel,
                 gyroscopeViewModel = gyroscopeViewModel,
-                magnetometerViewModel = magnetometerViewModel // Passa anche il ViewModel del magnetometro
+                magnetometerViewModel = magnetometerViewModel
             )
         }
+    }
+
+    private fun showBatteryOptimizationDialog() {
+        // Crea un dialogo che informa l'utente
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Disabilita Ottimizzazione Batteria")
+            .setMessage("Per permettere all'app di funzionare correttamente in background, devi disabilitare l'ottimizzazione della batteria. Vuoi andare alle impostazioni?")
+            .setPositiveButton("Sì") { _, _ ->
+                // Se l'utente accetta, apri le impostazioni
+                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                startActivity(intent)
+            }
+            .setNegativeButton("No") { dialog, _ ->
+                dialog.dismiss() // Chiude il dialogo
+            }
+            .setCancelable(false) // Il dialogo non può essere cancellato senza interazione
+        builder.show()
     }
 }

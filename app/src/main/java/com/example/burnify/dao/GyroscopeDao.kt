@@ -1,10 +1,9 @@
-package com.example.burnify
+package com.example.burnify.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.example.burnify.model.AccelerometerProcessedSample
-import com.example.burnify.model.GyroscopeProcessedSample
+import com.example.burnify.database.GyroscopeProcessedSample
 
 @Dao
 interface GyroscopeDao {

@@ -1,4 +1,4 @@
-package com.example.burnify.model
+package com.example.burnify.database
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

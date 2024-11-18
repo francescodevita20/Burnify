@@ -1,14 +1,13 @@
 package com.example.burnify
 
 import android.content.Context
-import com.example.burnify.model.AccelerometerProcessedSample
-import com.example.burnify.model.AccelerometerSample
-import com.example.burnify.model.GyroscopeProcessedSample
-import com.example.burnify.model.MagnetometerProcessedSample
+import com.example.burnify.database.AccelerometerProcessedSample
+import com.example.burnify.database.AppDatabaseProvider
+import com.example.burnify.database.GyroscopeProcessedSample
+import com.example.burnify.database.MagnetometerProcessedSample
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import java.io.File
 
 fun setSharedPreferences(context: Context, newMap: Map<String, Any>,sharedPreferencesName: String) {
     try {

@@ -1,6 +1,6 @@
-package com.example.burnify
+package com.example.burnify.dao
 
-import com.example.burnify.model.MagnetometerProcessedSample
+import com.example.burnify.database.MagnetometerProcessedSample
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query

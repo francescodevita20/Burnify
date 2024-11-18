@@ -1,7 +1,7 @@
 package com.example.burnify.processor
 
 import com.example.burnify.model.AccelerometerMeasurements
-import com.example.burnify.model.AccelerometerProcessedSample
+import com.example.burnify.database.AccelerometerProcessedSample
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.sqrt

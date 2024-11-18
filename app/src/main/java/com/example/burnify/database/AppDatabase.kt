@@ -1,12 +1,12 @@
-package com.example.burnify
+package com.example.burnify.database
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.example.burnify.model.AccelerometerProcessedSample
-import com.example.burnify.model.GyroscopeProcessedSample
-import com.example.burnify.model.MagnetometerProcessedSample
+import com.example.burnify.dao.AccelerometerDao
+import com.example.burnify.dao.GyroscopeDao
+import com.example.burnify.dao.MagnetometerDao
 
 @Database(entities = [AccelerometerProcessedSample::class, GyroscopeProcessedSample::class, MagnetometerProcessedSample::class], version = 4)
 abstract class AppDatabase : RoomDatabase() {

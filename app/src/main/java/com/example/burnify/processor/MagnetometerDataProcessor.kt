@@ -1,10 +1,7 @@
 package com.example.burnify.processor
 
-import com.example.burnify.model.GyroscopeMeasurements
-import com.example.burnify.model.GyroscopeProcessedSample
 import com.example.burnify.model.MagnetometerMeasurements
-import com.example.burnify.model.MagnetometerProcessedSample
-import kotlin.math.ln
+import com.example.burnify.database.MagnetometerProcessedSample
 import kotlin.math.pow
 import kotlin.math.sqrt
 import java.time.LocalDateTime
