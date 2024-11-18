@@ -2,10 +2,10 @@ package com.example.burnify.model
 import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
-import com.example.burnify.clearSharedPreferences
-import com.example.burnify.setSharedPreferences
 import com.example.burnify.processor.AccelerometerDataProcessor
-import com.example.burnify.getSharedPreferences
+import com.example.burnify.retrieveProcessedDataFromDatabase
+import com.example.burnify.saveProcessedDataToDatabase
+
 
 class AccelerometerSample() : Parcelable {
     var x: Float = 0f
@@ -103,47 +103,29 @@ class AccelerometerMeasurements : Parcelable {
         return 0
     }
 
-    fun addSample(sample: AccelerometerSample, context: Context) {
+    fun addSample(context: Context,sample: AccelerometerSample) {
         samplesCount += 1
 
         // Aggiungi il nuovo campione
         samples.add(sample)
 
-        // Se la lista è piena, processa i dati e salva nelle SharedPreferences
+        // Se la lista è piena, processa i dati e salva nel database
         if (isFull()) {
             println("Elaborazione in corso...")
             try {
                 // Processa i dati
-                val processedData = accelerometerDataProcessor.processMeasurements(this)
+                val processedData = accelerometerDataProcessor.processMeasurementsToEntity(this)
                 println("Dati processati: $processedData")
 
-                // Salva i dati processati in SharedPreferences
-                setSharedPreferences(context, processedData,"AccelerometerProcessedData")
 
+                saveProcessedDataToDatabase(context,processedData)
+                retrieveProcessedDataFromDatabase(context)
             } catch (e: Exception) {
                 println("Errore durante l'elaborazione: ${e.message}")
             }
 
-
-
-
             // Svuota la lista dei campioni
             samples.clear()
-
-
-
-            val processedDataSaved = getSharedPreferences(context,"AccelerometerProcessedData")
-            if (processedDataSaved != null) {
-                var count=0;
-                for (data in processedDataSaved) {
-                    count++
-                    println("Campione $count: $data")
-                }
-            } else {
-                println("Nessun dato processato disponibile.")
-            }
-
-
             samplesCount = 0
         }
     }

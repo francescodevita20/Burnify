@@ -1,6 +1,7 @@
 package com.example.burnify
 
 import android.content.Context
+import com.example.burnify.model.AccelerometerProcessedSample
 import com.example.burnify.model.AccelerometerSample
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -76,6 +77,46 @@ fun clearSharedPreferences(context: Context,sharedPreferencesName: String) {
     }
 }
 
+fun saveProcessedDataToDatabase(context: Context, processedData: AccelerometerProcessedSample) {
+
+    val correlationXY = if (processedData.correlationXY?.isNaN() == true) null else processedData.correlationXY
+    val correlationXZ = if (processedData.correlationXZ?.isNaN() == true) null else processedData.correlationXZ
+    val correlationYZ = if (processedData.correlationYZ?.isNaN() == true) null else processedData.correlationYZ
+    // Esegui l'inserimento nel database in un thread separato
+
+    val updatedProcessedData = processedData.copy(
+        correlationXY = correlationXY,
+        correlationXZ = correlationXZ,
+        correlationYZ = correlationYZ
+    )
+    Thread {
+    println("Salvataggio in corso...")
+        val db = AppDatabaseProvider.getInstance(context) // Usa il singleton
+        val dao = db.accelerometerDao()
+        println("fermo qui")
+        // Inserisci i dati processati nel database
+        dao.insertProcessedSample(processedData)
+        println("Dati processati salvati nel database!!!!!")
+    }.start()
+}
+
+fun retrieveProcessedDataFromDatabase(context: Context) {
+    // Esegui la lettura dei dati dal database in un thread separato
+    Thread {
+        // Ottieni l'istanza del database
+        val db = AppDatabaseProvider.getInstance(context) // Usa il singleton del database
+        val dao = db.accelerometerDao()
+
+        // Recupera tutti i campioni processati dal database
+        val processedSamples = dao.getAllProcessedSamples()
+
+        // Stampa i dati recuperati per la verifica
+        println("Dati recuperati dal database:")
+        for (sample in processedSamples) {
+            println("ID: ${sample.id}, X: $sample.") // Supponendo che l'entità abbia questi campi
+        }
+    }.start()
+}
 
 
 

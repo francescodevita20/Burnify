@@ -11,7 +11,10 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import androidx.lifecycle.ViewModelProvider
+import com.example.burnify.AppDatabase
+import com.example.burnify.AppDatabaseProvider
 import com.example.burnify.model.AccelerometerMeasurements
+import com.example.burnify.model.AccelerometerProcessedSample
 import com.example.burnify.model.AccelerometerSample
 import com.example.burnify.viewmodel.AccelerometerViewModel
 
@@ -78,28 +81,34 @@ class AccelerometerService : Service(), SensorEventListener {
         intent.putExtra("data", accelerometerData) // Dati dell'accelerometro da inviare
         sendBroadcast(intent)
     }
+
+
+
     private var samplesCount = 0
     // Metodo richiamato quando i dati del sensore cambiano
     override fun onSensorChanged(event: SensorEvent?) {
-
         event?.let {
             if (it.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-
-
+                // Configura il campione
                 sample.setSample(it.values[0], it.values[1], it.values[2])
 
+                // Aggiungi il campione ai dati accelerometrici
+                accelerometerData.addSample(applicationContext, sample)
 
-                accelerometerData.addSample(context = applicationContext,sample = sample)
+                // Salva il campione nel database in un thread separato
 
 
                 samplesCount++
-                // Invia i dati tramite broadcast
-                if(samplesCount >= samplesBatch){
-                sendAccelerometerData()
-                    samplesCount = 0}
+
+                // Invia i dati tramite broadcast ogni 20 campioni
+                if (samplesCount >= samplesBatch) {
+                    sendAccelerometerData()
+                    samplesCount = 0
+                }
             }
         }
     }
+
 
 
     // Metodo richiamato quando il servizio viene distrutto

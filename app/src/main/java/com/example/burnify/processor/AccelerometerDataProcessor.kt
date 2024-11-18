@@ -1,6 +1,7 @@
 package com.example.burnify.processor
 
 import com.example.burnify.model.AccelerometerMeasurements
+import com.example.burnify.model.AccelerometerProcessedSample
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -9,7 +10,7 @@ import java.time.format.DateTimeFormatter
 
 class AccelerometerDataProcessor {
 
-    fun processMeasurements(measurements: AccelerometerMeasurements): Map<String, Any> {
+    fun processMeasurementsToEntity(measurements: AccelerometerMeasurements): AccelerometerProcessedSample {
         val samples = measurements.getSamples()
         val xValues = samples.map { it.getSampleValues().first }
         val yValues = samples.map { it.getSampleValues().second }
@@ -19,24 +20,32 @@ class AccelerometerDataProcessor {
         val currentDateTime = LocalDateTime.now()
         val formattedDateTime = currentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
 
-        // Aggiungi la data e l'orario ai risultati
-        return mapOf(
-            "ProcessedAt" to formattedDateTime,
-            "MeanX" to calculateMean(xValues),
-            "MeanY" to calculateMean(yValues),
-            "MeanZ" to calculateMean(zValues),
-            "StandardDeviationX" to calculateStandardDeviation(xValues),
-            "StandardDeviationY" to calculateStandardDeviation(yValues),
-            "StandardDeviationZ" to calculateStandardDeviation(zValues),
-            "PercentilesX" to calculatePercentiles(xValues),
-            "PercentilesY" to calculatePercentiles(yValues),
-            "PercentilesZ" to calculatePercentiles(zValues),
-            "ThirdMoment" to calculateMoment(magnitudes, 3),
-            "FourthMoment" to calculateMoment(magnitudes, 4),
-            "EntropyValue" to calculateEntropy(magnitudes, 8),
-            "SpectralCharacteristics" to calculateSpectralCharacteristics(magnitudes),
-            "Autocorrelation" to calculateAutocorrelation(magnitudes),
-            "AxisCorrelation" to calculateAxisCorrelation(xValues, yValues, zValues)
+        return AccelerometerProcessedSample(
+            processedAt = formattedDateTime,
+            meanX = calculateMean(xValues),
+            meanY = calculateMean(yValues),
+            meanZ = calculateMean(zValues),
+            standardDeviationX = calculateStandardDeviation(xValues),
+            standardDeviationY = calculateStandardDeviation(yValues),
+            standardDeviationZ = calculateStandardDeviation(zValues),
+            percentile25X = calculatePercentiles(xValues)["25thPercentile"] ?: 0f,
+            percentile50X = calculatePercentiles(xValues)["50thPercentile"] ?: 0f,
+            percentile75X = calculatePercentiles(xValues)["75thPercentile"] ?: 0f,
+            percentile25Y = calculatePercentiles(yValues)["25thPercentile"] ?: 0f,
+            percentile50Y = calculatePercentiles(yValues)["50thPercentile"] ?: 0f,
+            percentile75Y = calculatePercentiles(yValues)["75thPercentile"] ?: 0f,
+            percentile25Z = calculatePercentiles(zValues)["25thPercentile"] ?: 0f,
+            percentile50Z = calculatePercentiles(zValues)["50thPercentile"] ?: 0f,
+            percentile75Z = calculatePercentiles(zValues)["75thPercentile"] ?: 0f,
+            thirdMoment = calculateMoment(magnitudes, 3),
+            fourthMoment = calculateMoment(magnitudes, 4),
+            entropyValue = calculateEntropy(magnitudes, 8),
+            spectralLogEnergy = calculateSpectralCharacteristics(magnitudes)["LogEnergy"] ?: 0f,
+            spectralEntropy = calculateSpectralCharacteristics(magnitudes)["SpectralEntropy"] ?: 0f,
+            autocorrelation = calculateAutocorrelation(magnitudes),
+            correlationXY = calculateCorrelation(xValues, yValues),
+            correlationXZ = calculateCorrelation(xValues, zValues),
+            correlationYZ = calculateCorrelation(yValues, zValues)
         )
     }
 
@@ -121,14 +130,38 @@ class AccelerometerDataProcessor {
 
     // Funzione che ritorna tutti i valori calcolati come stringa
     fun getResultsAsString(measurements: AccelerometerMeasurements): String {
-
-
-        val results = processMeasurements(measurements)
+        // Elabora i dati in un oggetto AccelerometerProcessedSample
+        val processedSample = processMeasurementsToEntity(measurements)
 
         return buildString {
-            results.forEach { (key, value) ->
-                appendLine("$key: $value")
-            }
+            appendLine("ProcessedAt: ${processedSample.processedAt}")
+            appendLine("MeanX: ${processedSample.meanX}")
+            appendLine("MeanY: ${processedSample.meanY}")
+            appendLine("MeanZ: ${processedSample.meanZ}")
+            appendLine("StandardDeviationX: ${processedSample.standardDeviationX}")
+            appendLine("StandardDeviationY: ${processedSample.standardDeviationY}")
+            appendLine("StandardDeviationZ: ${processedSample.standardDeviationZ}")
+            appendLine("Percentile25X: ${processedSample.percentile25X}")
+            appendLine("Percentile50X: ${processedSample.percentile50X}")
+            appendLine("Percentile75X: ${processedSample.percentile75X}")
+            appendLine("Percentile25Y: ${processedSample.percentile25Y}")
+            appendLine("Percentile50Y: ${processedSample.percentile50Y}")
+            appendLine("Percentile75Y: ${processedSample.percentile75Y}")
+            appendLine("Percentile25Z: ${processedSample.percentile25Z}")
+            appendLine("Percentile50Z: ${processedSample.percentile50Z}")
+            appendLine("Percentile75Z: ${processedSample.percentile75Z}")
+            appendLine("ThirdMoment: ${processedSample.thirdMoment}")
+            appendLine("FourthMoment: ${processedSample.fourthMoment}")
+            appendLine("EntropyValue: ${processedSample.entropyValue}")
+            appendLine("SpectralLogEnergy: ${processedSample.spectralLogEnergy}")
+            appendLine("SpectralEntropy: ${processedSample.spectralEntropy}")
+            appendLine("Autocorrelation: ${processedSample.autocorrelation}")
+            appendLine("CorrelationXY: ${processedSample.correlationXY}")
+            appendLine("CorrelationXZ: ${processedSample.correlationXZ}")
+            appendLine("CorrelationYZ: ${processedSample.correlationYZ}")
         }
     }
+
 }
+
+

@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -42,12 +43,43 @@ android {
 dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.5") // Usa la versione più recente
     implementation("androidx.compose.material3:material3:1.3.1") // Usa la versione di Material 3
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7") // O l'ultima versione disponibile
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation(libs.androidx.adapters) // O l'ultima versione disponibile
         // debugImplementation because LeakCanary should only run in debug builds.
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
     implementation ("com.google.code.gson:gson:2.10.1") // Aggiungi questa dipendenza
 
+    dependencies {
+        val room_version = "2.6.1"
 
+        implementation("androidx.room:room-runtime:$room_version")
+
+        // If this project uses any Kotlin source, use Kotlin Symbol Processing (KSP)
+        // See Add the KSP plugin to your project
+        ksp("androidx.room:room-compiler:$room_version")
+
+        // If this project only uses Java source, use the Java annotationProcessor
+        // No additional plugins are necessary
+        annotationProcessor("androidx.room:room-compiler:$room_version")
+
+        // optional - Kotlin Extensions and Coroutines support for Room
+        implementation("androidx.room:room-ktx:$room_version")
+
+        // optional - RxJava2 support for Room
+        implementation("androidx.room:room-rxjava2:$room_version")
+
+        // optional - RxJava3 support for Room
+        implementation("androidx.room:room-rxjava3:$room_version")
+
+        // optional - Guava support for Room, including Optional and ListenableFuture
+        implementation("androidx.room:room-guava:$room_version")
+
+        // optional - Test helpers
+        testImplementation("androidx.room:room-testing:$room_version")
+
+        // optional - Paging 3 Integration
+        implementation("androidx.room:room-paging:$room_version")
+    }
 
 
 
