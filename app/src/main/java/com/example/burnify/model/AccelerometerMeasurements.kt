@@ -119,7 +119,7 @@ class AccelerometerMeasurements : Parcelable {
 
 
                 saveProcessedDataToDatabase(context,processedData)
-                retrieveProcessedDataFromDatabase(context)
+                retrieveProcessedDataFromDatabase(context,"accelerometer")
             } catch (e: Exception) {
                 println("Errore durante l'elaborazione: ${e.message}")
             }

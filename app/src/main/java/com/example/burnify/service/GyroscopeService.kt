@@ -86,7 +86,7 @@ private var samplesCount = 0
                 // Reuse an existing sample to reduce object creation
                     sample.setSample(it.values[0], it.values[1], it.values[2])
 
-                gyroscopeData.addSample(sample)
+                gyroscopeData.addSample(applicationContext,sample)
 
                 samplesCount++
                 // Invia i dati tramite broadcast

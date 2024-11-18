@@ -5,11 +5,12 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.burnify.model.AccelerometerProcessedSample
+import com.example.burnify.model.GyroscopeProcessedSample
 
-@Database(entities = [AccelerometerProcessedSample::class], version = 2)
+@Database(entities = [AccelerometerProcessedSample::class, GyroscopeProcessedSample::class], version = 3)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accelerometerDao(): AccelerometerDao
-    //abstract fun gyroscopeProcessedSampleDao(): GyroscopeProcessedSampleDao TODO: ADD GYROSCOPE DAO AND ENTITY
+    abstract fun gyroscopeDao(): GyroscopeDao
 }
 
 object AppDatabaseProvider {

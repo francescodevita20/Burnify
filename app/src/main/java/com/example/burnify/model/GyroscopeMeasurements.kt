@@ -1,7 +1,10 @@
 package com.example.burnify.model
+import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
 import com.example.burnify.processor.GyroscopeDataProcessor
+import com.example.burnify.retrieveProcessedDataFromDatabase
+import com.example.burnify.saveProcessedDataToDatabase
 
 class GyroscopeSample() : Parcelable {
     var x: Float = 0f
@@ -101,23 +104,31 @@ class GyroscopeMeasurements : Parcelable {
     }
 
     // Metodo per aggiungere un campione
-    fun addSample(sample: GyroscopeSample) {
+    fun addSample(context: Context, sample: GyroscopeSample) {
         samplesCount += 1
 
-        // Se la lista è piena, processa i dati e svuota la lista
+        // Aggiungi il nuovo campione
+        samples.add(sample)
+
+        // Se la lista è piena, processa i dati e salva nel database
         if (isFull()) {
             println("Elaborazione in corso...")
             try {
-                println(gyroscopeDataProcessor.processMeasurements(this))
+                // Processa i dati
+                val processedData = gyroscopeDataProcessor.processMeasurementsToEntity(this)
+                println("Dati processati: $processedData")
+
+
+                saveProcessedDataToDatabase(context,processedData)
+                retrieveProcessedDataFromDatabase(context,"gyroscope")
             } catch (e: Exception) {
                 println("Errore durante l'elaborazione: ${e.message}")
             }
 
-            samples.clear() // Svuota la lista dei campioni
-            samplesCount = 0 // Reset del conteggio dei campioni
+            // Svuota la lista dei campioni
+            samples.clear()
+            samplesCount = 0
         }
-
-        samples.add(sample) // Aggiunge il nuovo campione alla lista
     }
 
     // Metodo per ottenere tutti i campioni

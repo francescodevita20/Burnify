@@ -45,3 +45,16 @@ data class AccelerometerProcessedSample(
                 "Correlation XY: $correlationXY, XZ: $correlationXZ, YZ: $correlationYZ"
     }
 }
+
+
+@Entity(tableName = "gyroscope_processed_sample")
+data class GyroscopeProcessedSample(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val processedAt: String,
+    val meanX: Float,
+    val meanY: Float,
+    val meanZ: Float,
+){
+    fun printSampleDetails(): String {
+    return "ID: $id, Processed At: $processedAt, Mean X: $meanX, Mean Y: $meanY, Mean Z: $meanZ, "
+}}

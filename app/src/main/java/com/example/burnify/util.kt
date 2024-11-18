@@ -3,6 +3,7 @@ package com.example.burnify
 import android.content.Context
 import com.example.burnify.model.AccelerometerProcessedSample
 import com.example.burnify.model.AccelerometerSample
+import com.example.burnify.model.GyroscopeProcessedSample
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -100,8 +101,9 @@ fun saveProcessedDataToDatabase(context: Context, processedData: AccelerometerPr
     }.start()
 }
 
-fun retrieveProcessedDataFromDatabase(context: Context) {
+fun retrieveProcessedDataFromDatabase(context: Context,daoName: String) {
     // Esegui la lettura dei dati dal database in un thread separato
+    if (daoName == "accelerometer") {
     Thread {
         // Ottieni l'istanza del database
         val db = AppDatabaseProvider.getInstance(context) // Usa il singleton del database
@@ -117,6 +119,37 @@ fun retrieveProcessedDataFromDatabase(context: Context) {
         }
     }.start()
 }
+else if (daoName == "gyroscope") {
+        Thread {
+            // Ottieni l'istanza del database
+            val db = AppDatabaseProvider.getInstance(context) // Usa il singleton del database
+            val dao = db.gyroscopeDao()
 
+            // Recupera tutti i campioni processati dal database
+            val processedSamples = dao.getAllProcessedSamples()
+
+            // Stampa i dati recuperati per la verifica
+            println("Dati recuperati dal database:")
+            for (sample in processedSamples) {
+                println("ID: ${sample.id}, X: $sample.") // Supponendo che l'entità abbia questi campi
+            }
+        }.start()
+}
+}
+
+fun saveProcessedDataToDatabase(context: Context, processedData: GyroscopeProcessedSample) {
+
+    // Esegui l'inserimento nel database in un thread separato
+
+    Thread {
+        println("Salvataggio in corso...")
+        val db = AppDatabaseProvider.getInstance(context) // Usa il singleton
+        val dao = db.gyroscopeDao()
+        println("fermo qui")
+        // Inserisci i dati processati nel database
+        dao.insertProcessedSample(processedData)
+        println("Dati processati salvati nel database!!!!!")
+    }.start()
+}
 
 
