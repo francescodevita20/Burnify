@@ -6,8 +6,12 @@ import android.content.Intent
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
-            val serviceIntent = Intent(context, AccelerometerService::class.java)
-            context.startForegroundService(serviceIntent)
+            val serviceAccelerometerIntent = Intent(context, AccelerometerService::class.java)
+            context.startForegroundService(serviceAccelerometerIntent)
+            val serviceGyroscopeIntent = Intent(context, GyroscopeService::class.java)
+            context.startForegroundService(serviceGyroscopeIntent)
+            val serviceMagnetometerIntent = Intent(context, MagnetometerService::class.java)
+            context.startForegroundService(serviceMagnetometerIntent)
         }
     }
 }

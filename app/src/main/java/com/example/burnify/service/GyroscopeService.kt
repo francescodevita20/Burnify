@@ -1,5 +1,8 @@
 package com.example.burnify.service
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -7,6 +10,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
@@ -18,16 +22,12 @@ import com.example.burnify.viewmodel.GyroscopeViewModel
 class GyroscopeService : Service(), SensorEventListener {
 
     // SensorManager to access system sensors
-    private val sensorManager: SensorManager by lazy {
-        getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    }
+    private lateinit var sensorManager: SensorManager
     private val samplesBatch = 20
 
     private val sample = GyroscopeSample()
     // Gyroscope sensor instance
-    private val gyroscope: Sensor? by lazy {
-        sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-    }
+    private var gyroscope: Sensor? = null
 
     // Sampling interval in milliseconds
     private val samplingInterval: Long = 250L
@@ -36,13 +36,20 @@ class GyroscopeService : Service(), SensorEventListener {
     private val gyroscopeData = GyroscopeMeasurements()
 
     // Handler for periodic updates
-    private val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
+    private val handler = Handler(Looper.getMainLooper())
 
     // ViewModel to manage gyroscope data
     private lateinit var viewModel: GyroscopeViewModel
 
     override fun onCreate() {
         super.onCreate()
+
+        // Set up the foreground notification for the service
+        startForegroundWithNotification()
+
+        // Initialize the SensorManager and gyroscope sensor
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 
         // Initialize the ViewModel
         viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(
@@ -58,17 +65,61 @@ class GyroscopeService : Service(), SensorEventListener {
         startDataCollection()
     }
 
-    // Start periodic data collection and update the ViewModel every "samplingInterval" milliseconds
+    private fun startForegroundWithNotification() {
+        // Create a notification channel for Android 8.0 and above
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                "GyroscopeServiceChannel",
+                "Gyroscope Service",
+                NotificationManager.IMPORTANCE_LOW
+            )
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.createNotificationChannel(channel)
+        }
+
+        // Create the notification
+        val notification = Notification.Builder(this, "GyroscopeServiceChannel")
+            .setContentTitle("Gyroscope Service")
+            .setContentText("Collecting gyroscope data.")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .build()
+
+        // Start the service as a foreground service
+        startForeground(2, notification)
+    }
+
     private fun startDataCollection() {
         handler.postDelayed(object : Runnable {
             override fun run() {
                 // Update the ViewModel with gyroscope data
                 viewModel.updateGyroscopeData(gyroscopeData)
 
-                // Schedule the next update
+                // Reschedule the update
                 handler.postDelayed(this, samplingInterval)
             }
         }, samplingInterval)
+    }
+
+    private var samplesCount = 0
+
+    // Called when sensor data changes
+    override fun onSensorChanged(event: SensorEvent?) {
+        event?.let {
+            if (it.sensor.type == Sensor.TYPE_GYROSCOPE) {
+                // Reuse an existing sample to reduce object creation
+                sample.setSample(it.values[0], it.values[1], it.values[2])
+
+                gyroscopeData.addSample(applicationContext, sample)
+
+                samplesCount++
+
+                // Send data via broadcast when batch is collected
+                if (samplesCount >= samplesBatch) {
+                    sendGyroscopeData()
+                    samplesCount = 0
+                }
+            }
+        }
     }
 
     // Send gyroscope data via broadcast
@@ -78,27 +129,12 @@ class GyroscopeService : Service(), SensorEventListener {
         }
         sendBroadcast(intent)
     }
-private var samplesCount = 0
-    // Called when sensor data changes
-    override fun onSensorChanged(event: SensorEvent?) {
-        event?.let {
-            if (it.sensor.type == Sensor.TYPE_GYROSCOPE) {
-                // Reuse an existing sample to reduce object creation
-                    sample.setSample(it.values[0], it.values[1], it.values[2])
 
-                gyroscopeData.addSample(applicationContext,sample)
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        println("Gyroscope Service started with onStartCommand")
+        return START_STICKY
+    }
 
-                samplesCount++
-                // Invia i dati tramite broadcast
-                if(samplesCount >= samplesBatch){
-                    sendGyroscopeData()
-                    samplesCount = 0}
-            }
-            }
-        }
-
-
-    // Called when the service is destroyed
     override fun onDestroy() {
         super.onDestroy()
 
@@ -107,6 +143,8 @@ private var samplesCount = 0
 
         // Remove all callbacks and messages from the handler
         handler.removeCallbacksAndMessages(null)
+
+        println("Gyroscope Service terminated")
     }
 
     // Not used in this example

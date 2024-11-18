@@ -13,6 +13,7 @@ interface MagnetometerDao {
     @Query("SELECT * FROM magnetometer_processed_sample")
     fun getAllProcessedSamples(): List<MagnetometerProcessedSample>
 
+    //This function delete all samples from db, use it from IDE
     @Query("DELETE FROM magnetometer_processed_sample")
     suspend fun deleteAllMagnetometerSamples()
 }

@@ -32,10 +32,10 @@ class MainActivity : ComponentActivity() {
         startForegroundService(accelerometerServiceIntent)
 
         val gyroscopeServiceIntent = Intent(this, GyroscopeService::class.java)
-        startService(gyroscopeServiceIntent)
+        startForegroundService(gyroscopeServiceIntent)
 
         val magnetometerServiceIntent = Intent(this, MagnetometerService::class.java)
-        startService(magnetometerServiceIntent)
+        startForegroundService(magnetometerServiceIntent)
 
         setContent {
             App(
