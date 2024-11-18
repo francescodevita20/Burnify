@@ -58,3 +58,16 @@ data class GyroscopeProcessedSample(
     fun printSampleDetails(): String {
     return "ID: $id, Processed At: $processedAt, Mean X: $meanX, Mean Y: $meanY, Mean Z: $meanZ, "
 }}
+
+@Entity(tableName = "magnetometer_processed_sample")
+data class MagnetometerProcessedSample(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val processedAt: String,
+    val meanX: Float,
+    val meanY: Float,
+    val meanZ: Float,
+){
+    fun printSampleDetails(): String {
+        return "ID: $id, Processed At: $processedAt, Mean X: $meanX, Mean Y: $meanY, Mean Z: $meanZ, "
+    }}
+

@@ -13,6 +13,9 @@ interface GyroscopeDao {
 
     @Query("SELECT * FROM gyroscope_processed_sample")
     fun getAllProcessedSamples(): List<GyroscopeProcessedSample>
+
+    @Query("DELETE FROM gyroscope_processed_sample")
+    suspend fun deleteAllGyroscopeSamples()
 }
 
 

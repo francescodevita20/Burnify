@@ -86,7 +86,7 @@ private var samplesCount = 0
 
                     sample.setSample(it.values[0], it.values[1], it.values[2])
 
-                magnetometerData.addSample(sample)
+                magnetometerData.addSample(applicationContext,sample)
 
                 samplesCount++
                 // Invia i dati tramite broadcast

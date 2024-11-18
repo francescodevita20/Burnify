@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.burnify.model.AccelerometerProcessedSample
 import com.example.burnify.model.AccelerometerSample
 import com.example.burnify.model.GyroscopeProcessedSample
+import com.example.burnify.model.MagnetometerProcessedSample
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -113,7 +114,7 @@ fun retrieveProcessedDataFromDatabase(context: Context,daoName: String) {
         val processedSamples = dao.getAllProcessedSamples()
 
         // Stampa i dati recuperati per la verifica
-        println("Dati recuperati dal database:")
+        println("ACCELEROMETER Dati recuperati dal database:")
         for (sample in processedSamples) {
             println("ID: ${sample.id}, X: $sample.") // Supponendo che l'entità abbia questi campi
         }
@@ -129,12 +130,27 @@ else if (daoName == "gyroscope") {
             val processedSamples = dao.getAllProcessedSamples()
 
             // Stampa i dati recuperati per la verifica
-            println("Dati recuperati dal database:")
+            println("GYROSCOPE Dati recuperati dal database:")
             for (sample in processedSamples) {
                 println("ID: ${sample.id}, X: $sample.") // Supponendo che l'entità abbia questi campi
             }
         }.start()
 }
+    else if (daoName == "magnetometer") {
+        Thread {
+        // Ottieni l'istanza del database
+        val db = AppDatabaseProvider.getInstance(context) // Usa il singleton del database
+        val dao = db.magnetometerDao()
+
+        // Recupera tutti i campioni processati dal database
+        val processedSamples = dao.getAllProcessedSamples()
+
+        // Stampa i dati recuperati per la verifica
+        println("MAGNETOMETER Dati recuperati dal database:")
+        for (sample in processedSamples) {
+            println("ID: ${sample.id}, X: $sample.") // Supponendo che l'entità abbia questi campi
+        }
+    }.start()}
 }
 
 fun saveProcessedDataToDatabase(context: Context, processedData: GyroscopeProcessedSample) {
@@ -150,6 +166,18 @@ fun saveProcessedDataToDatabase(context: Context, processedData: GyroscopeProces
         dao.insertProcessedSample(processedData)
         println("Dati processati salvati nel database!!!!!")
     }.start()
+}
+
+fun saveProcessedDataToDatabase(context: Context, processedData: MagnetometerProcessedSample) {
+    Thread {
+    println("Salvataggio in corso...")
+    val db = AppDatabaseProvider.getInstance(context) // Usa il singleton
+    val dao = db.magnetometerDao()
+    println("fermo qui")
+    // Inserisci i dati processati nel database
+    dao.insertProcessedSample(processedData)
+    println("Dati processati salvati nel database!!!!!")
+}.start()
 }
 
 

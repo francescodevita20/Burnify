@@ -1,8 +1,11 @@
 package com.example.burnify.model
 
+import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
 import com.example.burnify.processor.MagnetometerDataProcessor
+import com.example.burnify.retrieveProcessedDataFromDatabase
+import com.example.burnify.saveProcessedDataToDatabase
 
 class MagnetometerSample() : Parcelable {
     var x: Float = 0f
@@ -90,24 +93,32 @@ class MagnetometerMeasurements : Parcelable {
         return 0
     }
 
-    fun addSample(sample: MagnetometerSample) {
+    fun addSample(context: Context, sample: MagnetometerSample) {
         samplesCount += 1
 
+        // Aggiungi il nuovo campione
+        samples.add(sample)
+
+        // Se la lista è piena, processa i dati e salva nel database
         if (isFull()) {
             println("Elaborazione in corso...")
             try {
-                println(magnetometerDataProcessor.processMeasurements(this))
+                // Processa i dati
+                val processedData = magnetometerDataProcessor.processMeasurementsToEntity(this)
+                println("Dati processati: $processedData")
+
+
+                saveProcessedDataToDatabase(context,processedData)
+                retrieveProcessedDataFromDatabase(context,"magnetometer")
             } catch (e: Exception) {
                 println("Errore durante l'elaborazione: ${e.message}")
             }
 
+            // Svuota la lista dei campioni
             samples.clear()
             samplesCount = 0
         }
-
-        samples.add(sample)
     }
-
     fun getSamples(): List<MagnetometerSample> {
         return samples.toList()
     }

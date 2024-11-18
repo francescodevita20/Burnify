@@ -12,6 +12,9 @@ interface AccelerometerDao {
 
     @Query("SELECT * FROM accelerometer_processed_sample")
     fun getAllProcessedSamples(): List<AccelerometerProcessedSample>
+
+    @Query("DELETE FROM accelerometer_processed_sample")
+    suspend fun deleteAllAccelerometerSamples()
 }
 
 
