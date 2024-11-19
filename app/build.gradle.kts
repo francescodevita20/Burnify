@@ -53,6 +53,8 @@ dependencies {
     implementation ("com.google.code.gson:gson:2.10.1") // Aggiungi questa dipendenza
     implementation ("androidx.work:work-runtime:2.10.0")
     implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation ("androidx.compose.ui:ui:1.5.1") // Use the latest version
+    implementation ("androidx.compose.foundation:foundation:1.5.1")
     dependencies {
         val room_version = "2.6.1"
 

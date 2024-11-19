@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.burnify.ui.components.ActivityData
+import com.example.burnify.ui.components.CaloriesBurnedChart
 import com.example.burnify.ui.components.HistogramActivityChart
 
 @Composable
@@ -38,5 +40,18 @@ fun TodayScreen() {
         Column {
             HistogramActivityChart(classes = classes)
         }
+        val activityData = listOf(
+            ActivityData(hour = 0, activityType = "riposo", caloriesBurned = 50f),
+            ActivityData(hour = 1, activityType = "riposo", caloriesBurned = 40f),
+            ActivityData(hour = 1, activityType = "riposo", caloriesBurned = 30f),
+            ActivityData(hour = 8, activityType = "corsa", caloriesBurned = 300f),
+            ActivityData(hour = 10, activityType = "camminata", caloriesBurned = 150f),
+            ActivityData(hour = 23, activityType = "palestra", caloriesBurned = 400f)
+        )
+        Column{
+        CaloriesBurnedChart(activityData = activityData)
+
+        }
+
     }
 }
