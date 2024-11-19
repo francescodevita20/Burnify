@@ -1,9 +1,12 @@
-package com.example.burnify
-import java.io.Serializable
+package com.example.burnify.model
+import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
+import com.example.burnify.processor.GyroscopeDataProcessor
+import com.example.burnify.retrieveProcessedDataFromDatabase
+import com.example.burnify.saveProcessedDataToDatabase
 
-class AccelerometerSample() : Parcelable {
+class GyroscopeSample() : Parcelable {
     var x: Float = 0f
     var y: Float = 0f
     var z: Float = 0f
@@ -25,7 +28,6 @@ class AccelerometerSample() : Parcelable {
     fun getSampleValues(): Triple<Float, Float, Float> {
         return Triple(x, y, z)
     }
-
 
     // Metodo per ottenere una rappresentazione dei valori
     fun getSample(): String {
@@ -57,12 +59,12 @@ class AccelerometerSample() : Parcelable {
     }
 
     // Companion object per la creazione dell'oggetto Parcelable
-    companion object CREATOR : Parcelable.Creator<AccelerometerSample> {
-        override fun createFromParcel(parcel: Parcel): AccelerometerSample {
-            return AccelerometerSample(parcel)
+    companion object CREATOR : Parcelable.Creator<GyroscopeSample> {
+        override fun createFromParcel(parcel: Parcel): GyroscopeSample {
+            return GyroscopeSample(parcel)
         }
 
-        override fun newArray(size: Int): Array<AccelerometerSample?> {
+        override fun newArray(size: Int): Array<GyroscopeSample?> {
             return arrayOfNulls(size)
         }
     }
@@ -70,11 +72,14 @@ class AccelerometerSample() : Parcelable {
 
 
 
-class AccelerometerMeasurements : Parcelable {
-    private val samples = mutableListOf<AccelerometerSample>()
+
+
+class GyroscopeMeasurements : Parcelable {
+    private val samples = mutableListOf<GyroscopeSample>()
     private var samplesCount = 0
     private var maxSize = 500
-    private val accelerometerDataProcessor = AccelerometerDataProcessor()
+    private val gyroscopeDataProcessor = GyroscopeDataProcessor()
+
     // Costruttore vuoto per Parcelable
     constructor()
 
@@ -83,7 +88,7 @@ class AccelerometerMeasurements : Parcelable {
         samplesCount = parcel.readInt()
         maxSize = parcel.readInt()
         // Recupera i campioni dal Parcel
-        parcel.readList(samples, AccelerometerSample::class.java.classLoader)
+        parcel.readList(samples, GyroscopeSample::class.java.classLoader)
     }
 
     // Metodo che scrive i dati nell'oggetto Parcel
@@ -99,36 +104,40 @@ class AccelerometerMeasurements : Parcelable {
     }
 
     // Metodo per aggiungere un campione
-    fun addSample(sample: AccelerometerSample) {
-
-
+    fun addSample(context: Context, sample: GyroscopeSample) {
         samplesCount += 1
 
-        // Se la lista è piena, processa i dati e svuota la lista
-        if (isFull()) {
+        // Aggiungi il nuovo campione
+        samples.add(sample)
 
+        // Se la lista è piena, processa i dati e salva nel database
+        if (isFull()) {
             println("Elaborazione in corso...")
             try {
-                println(accelerometerDataProcessor.processMeasurements(this))
+                // Processa i dati
+                val processedData = gyroscopeDataProcessor.processMeasurementsToEntity(this)
+                println("Dati processati: $processedData")
+
+
+                saveProcessedDataToDatabase(context,processedData)
+                retrieveProcessedDataFromDatabase(context,"gyroscope")
             } catch (e: Exception) {
                 println("Errore durante l'elaborazione: ${e.message}")
             }
 
-
-            samples.clear() // Svuota la lista dei campioni
-            samplesCount = 0 // Reset del conteggio dei campioni
+            // Svuota la lista dei campioni
+            samples.clear()
+            samplesCount = 0
         }
-
-        samples.add(sample) // Aggiunge il nuovo campione alla lista
     }
 
     // Metodo per ottenere tutti i campioni
-    fun getSamples(): List<AccelerometerSample> {
+    fun getSamples(): List<GyroscopeSample> {
         return samples.toList() // Restituisce una copia della lista
     }
 
     // Metodo per ottenere l'ultimo campione
-    fun getLastSample(): AccelerometerSample? {
+    fun getLastSample(): GyroscopeSample? {
         return samples.lastOrNull()
     }
 
@@ -138,12 +147,12 @@ class AccelerometerMeasurements : Parcelable {
     }
 
     // Companion object per la creazione dell'oggetto Parcelable
-    companion object CREATOR : Parcelable.Creator<AccelerometerMeasurements> {
-        override fun createFromParcel(parcel: Parcel): AccelerometerMeasurements {
-            return AccelerometerMeasurements(parcel)
+    companion object CREATOR : Parcelable.Creator<GyroscopeMeasurements> {
+        override fun createFromParcel(parcel: Parcel): GyroscopeMeasurements {
+            return GyroscopeMeasurements(parcel)
         }
 
-        override fun newArray(size: Int): Array<AccelerometerMeasurements?> {
+        override fun newArray(size: Int): Array<GyroscopeMeasurements?> {
             return arrayOfNulls(size)
         }
     }

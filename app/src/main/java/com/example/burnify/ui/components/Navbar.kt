@@ -1,4 +1,4 @@
-package com.example.burnify
+package com.example.burnify.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
