@@ -5,6 +5,8 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+
+
 android {
     namespace = "com.example.burnify"
     compileSdk = 35
@@ -40,6 +42,7 @@ android {
     }
 }
 
+
 dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.5") // Usa la versione più recente
     implementation("androidx.compose.material3:material3:1.3.1") // Usa la versione di Material 3
@@ -49,6 +52,7 @@ dependencies {
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
     implementation ("com.google.code.gson:gson:2.10.1") // Aggiungi questa dipendenza
     implementation ("androidx.work:work-runtime:2.10.0")
+    implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
     dependencies {
         val room_version = "2.6.1"
 
