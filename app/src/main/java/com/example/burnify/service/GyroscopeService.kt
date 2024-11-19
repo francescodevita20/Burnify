@@ -15,6 +15,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import androidx.lifecycle.ViewModelProvider
+import com.example.burnify.NotificationHelper
 import com.example.burnify.model.GyroscopeMeasurements
 import com.example.burnify.model.GyroscopeSample
 import com.example.burnify.viewmodel.GyroscopeViewModel
@@ -78,14 +79,13 @@ class GyroscopeService : Service(), SensorEventListener {
         }
 
         // Create the notification
-        val notification = Notification.Builder(this, "GyroscopeServiceChannel")
-            .setContentTitle("Gyroscope Service")
-            .setContentText("Collecting gyroscope data.")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .build()
+        val notificationHelper = NotificationHelper(this)
+        val notification = notificationHelper.createServiceNotification("Gyroscope Service")
+        startForeground(1003, notification)
 
-        // Start the service as a foreground service
-        startForeground(2, notification)
+        // Aggiorna o crea la notifica principale
+        val groupNotification = notificationHelper.createGroupNotification()
+        notificationHelper.notify(1000, groupNotification)
     }
 
     private fun startDataCollection() {

@@ -8,6 +8,11 @@ import com.example.burnify.database.MagnetometerProcessedSample
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
+
 
 fun setSharedPreferences(context: Context, newMap: Map<String, Any>,sharedPreferencesName: String) {
     try {
@@ -178,5 +183,61 @@ fun saveProcessedDataToDatabase(context: Context, processedData: MagnetometerPro
     println("Dati processati salvati nel database!!!!!")
 }.start()
 }
+
+
+
+class NotificationHelper(private val context: Context) {
+
+    companion object {
+        const val GROUP_KEY = "com.example.burnify.services"
+        const val CHANNEL_ID = "ServicesChannel"
+    }
+
+    private val notificationManager =
+        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+    init {
+        // Crea il canale di notifica se non è già creato
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Servizi Burnify",
+                NotificationManager.IMPORTANCE_LOW
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    // Notifica principale (il gruppo)
+    fun createGroupNotification(): Notification {
+        return Notification.Builder(context, CHANNEL_ID)
+            .setContentTitle("Servizi attivi")
+            .setContentText("Stai usando più servizi attivi.")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setGroup(GROUP_KEY)
+            .setGroupSummary(true) // Mostra questa come principale
+            .build()
+    }
+
+    // Notifica individuale per ogni servizio
+    fun createServiceNotification(serviceName: String): Notification {
+        return Notification.Builder(context, CHANNEL_ID)
+            .setContentTitle(serviceName + " is running in background")
+            .setContentText("")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setGroup(GROUP_KEY) // Associa questa notifica al gruppo
+            .setStyle(null)
+            .build()
+    }
+
+    fun notify(notificationId: Int, notification: Notification) {
+        notificationManager.notify(notificationId, notification)
+    }
+
+    fun cancel(notificationId: Int) {
+        notificationManager.cancel(notificationId)
+    }
+}
+
 
 

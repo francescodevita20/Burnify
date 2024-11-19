@@ -15,6 +15,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import androidx.lifecycle.ViewModelProvider
+import com.example.burnify.NotificationHelper
 import com.example.burnify.model.MagnetometerMeasurements
 import com.example.burnify.model.MagnetometerSample
 import com.example.burnify.viewmodel.MagnetometerViewModel
@@ -77,14 +78,13 @@ class MagnetometerService : Service(), SensorEventListener {
         }
 
         // Crea la notifica
-        val notification = Notification.Builder(this, "MagnetometerServiceChannel")
-            .setContentTitle("Servizio Magnetometro")
-            .setContentText("Il servizio raccoglie dati magnetometrici.")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .build()
+        val notificationHelper = NotificationHelper(this)
+        val notification = notificationHelper.createServiceNotification("Magnetometer Service")
+        startForeground(1002, notification)
 
-        // Avvia il servizio come Foreground Service
-        startForeground(3, notification)
+        // Aggiorna o crea la notifica principale
+        val groupNotification = notificationHelper.createGroupNotification()
+        notificationHelper.notify(1000, groupNotification)
     }
 
     private fun startDataCollection() {

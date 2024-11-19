@@ -15,6 +15,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import androidx.lifecycle.ViewModelProvider
+import com.example.burnify.NotificationHelper
 import com.example.burnify.model.AccelerometerMeasurements
 import com.example.burnify.model.AccelerometerSample
 import com.example.burnify.viewmodel.AccelerometerViewModel
@@ -77,14 +78,14 @@ class AccelerometerService : Service(), SensorEventListener {
         }
 
         // Crea la notifica
-        val notification = Notification.Builder(this, "AccelerometerServiceChannel")
-            .setContentTitle("Servizio Accelerometro")
-            .setContentText("Il servizio raccoglie dati accelerometrici.")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .build()
+        val notificationHelper = NotificationHelper(this)
+        val notification = notificationHelper.createServiceNotification("Accelerometer Service")
 
         // Avvia il servizio come Foreground Service
-        startForeground(1, notification)
+        startForeground(1001, notification)
+
+        val groupNotification = notificationHelper.createGroupNotification()
+        notificationHelper.notify(1000, groupNotification)
     }
 
     private fun startDataCollection() {
