@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.burnify"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.burnify"
@@ -48,7 +48,7 @@ dependencies {
         // debugImplementation because LeakCanary should only run in debug builds.
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
     implementation ("com.google.code.gson:gson:2.10.1") // Aggiungi questa dipendenza
-
+    implementation ("androidx.work:work-runtime:2.10.0")
     dependencies {
         val room_version = "2.6.1"
 

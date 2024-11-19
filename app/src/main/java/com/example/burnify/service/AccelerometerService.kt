@@ -18,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.burnify.NotificationHelper
 import com.example.burnify.model.AccelerometerMeasurements
 import com.example.burnify.model.AccelerometerSample
+import com.example.burnify.scheduleDatabaseCleanup
 import com.example.burnify.viewmodel.AccelerometerViewModel
 
 class AccelerometerService : Service(), SensorEventListener {
@@ -42,7 +43,9 @@ class AccelerometerService : Service(), SensorEventListener {
 
     override fun onCreate() {
         super.onCreate()
+
         println("Servizio Accelerometro inizializzato")
+        scheduleDatabaseCleanup(applicationContext)
 
         // Configura la notifica per il Foreground Service
         startForegroundWithNotification()

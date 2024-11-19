@@ -13,9 +13,13 @@ interface AccelerometerDao {
     @Query("SELECT * FROM accelerometer_processed_sample")
     fun getAllProcessedSamples(): List<AccelerometerProcessedSample>
 
-    //This function delete all samples from db, use it from IDE
+    // Elimina tutte le righe con un'età superiore a 1 giorno
+    @Query("""
+        DELETE FROM accelerometer_processed_sample
+        WHERE processedAt <= datetime('now', '-1 day')
+    """) fun deleteOldSamples()
+
+    // Questa funzione elimina tutti i campioni dal database, usala da IDE
     @Query("DELETE FROM accelerometer_processed_sample")
-    suspend fun deleteAllAccelerometerSamples()
+    fun deleteAllAccelerometerSamples()
 }
-
-

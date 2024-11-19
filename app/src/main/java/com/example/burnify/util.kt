@@ -12,6 +12,12 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import androidx.work.Constraints
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.Worker
+import androidx.work.WorkerParameters
+import java.util.concurrent.TimeUnit
 
 
 fun setSharedPreferences(context: Context, newMap: Map<String, Any>,sharedPreferencesName: String) {
@@ -104,6 +110,21 @@ fun saveProcessedDataToDatabase(context: Context, processedData: AccelerometerPr
         dao.insertProcessedSample(processedData)
         println("Dati processati salvati nel database!!!!!")
     }.start()
+}
+
+fun deleteOldSamples(context: Context) {
+
+    Thread{
+        val db = AppDatabaseProvider.getInstance(context)
+        val accelerometerDao = db.accelerometerDao()
+        val gyroscopeDao = db.gyroscopeDao()
+        val magnetometerDao = db.magnetometerDao()
+        accelerometerDao.deleteOldSamples()
+        gyroscopeDao.deleteOldSamples()
+        magnetometerDao.deleteOldSamples()
+
+    }.start()
+
 }
 
 fun retrieveProcessedDataFromDatabase(context: Context,daoName: String) {
@@ -238,6 +259,38 @@ class NotificationHelper(private val context: Context) {
         notificationManager.cancel(notificationId)
     }
 }
+
+class DatabaseCleanupWorker(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
+
+    override fun doWork(): Result {
+        val db = AppDatabaseProvider.getInstance(applicationContext)
+        val accelerometerDao = db.accelerometerDao()
+        val gyroscopeDao = db.gyroscopeDao()
+        val magnetometerDao = db.magnetometerDao()
+
+        accelerometerDao.deleteOldSamples()
+        gyroscopeDao.deleteOldSamples()
+        magnetometerDao.deleteOldSamples()
+
+        // Indica che il lavoro è stato completato con successo
+        return Result.success()
+    }
+}
+
+
+fun scheduleDatabaseCleanup(context: Context) {
+    val workRequest = PeriodicWorkRequestBuilder<DatabaseCleanupWorker>(6, TimeUnit.HOURS)
+        .setConstraints(
+            Constraints.Builder()
+                .setRequiresBatteryNotLow(true) // Opzionale: solo quando la batteria è sufficiente
+                .build()
+        )
+        .build()
+
+    WorkManager.getInstance(context).enqueue(workRequest)
+}
+
+
 
 
 

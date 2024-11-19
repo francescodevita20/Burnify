@@ -13,6 +13,11 @@ interface MagnetometerDao {
     @Query("SELECT * FROM magnetometer_processed_sample")
     fun getAllProcessedSamples(): List<MagnetometerProcessedSample>
 
+    @Query("""
+        DELETE FROM magnetometer_processed_sample
+        WHERE processedAt <= datetime('now', '-1 day')
+    """) fun deleteOldSamples()
+
     //This function delete all samples from db, use it from IDE
     @Query("DELETE FROM magnetometer_processed_sample")
     suspend fun deleteAllMagnetometerSamples()
