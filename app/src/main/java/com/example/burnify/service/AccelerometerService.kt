@@ -28,7 +28,7 @@ class AccelerometerService : Service(), SensorEventListener {
 
     // Variabili per il sampling rate e il batch size
     private var samplingRateInMillis: Long = 1000 // Default value: 1 second
-    private var samplesBatch: Int = 20 // Default value: 20 samples per batch
+    private var samplesBatch: Int = 64 // Default value: 20 samples per batch
 
     // Contenitore per i dati dell'accelerometro
     private val accelerometerData = AccelerometerMeasurements()

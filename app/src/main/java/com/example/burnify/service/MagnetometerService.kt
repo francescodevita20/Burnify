@@ -28,7 +28,7 @@ class MagnetometerService : Service(), SensorEventListener {
 
     // Sampling rate e batch size
     private var samplingRateInMillis: Long = 1000
-    private var samplesBatch: Int = 20
+    private var samplesBatch: Int = 64
 
     // Contenitore per i dati del magnetometro
     private val magnetometerData = MagnetometerMeasurements()

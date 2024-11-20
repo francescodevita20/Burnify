@@ -28,7 +28,7 @@ class GyroscopeService : Service(), SensorEventListener {
 
     // Sampling rate and batch size
     private var samplingRateInMillis: Long = 1000
-    private var samplesBatch: Int = 20
+    private var samplesBatch: Int = 64
 
     // Container for gyroscope data
     private val gyroscopeData = GyroscopeMeasurements()
