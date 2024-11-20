@@ -55,6 +55,9 @@ dependencies {
     implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation ("androidx.compose.ui:ui:1.5.1") // Use the latest version
     implementation ("androidx.compose.foundation:foundation:1.5.1")
+    implementation ("org.apache.commons:commons-math3:3.6.1")
+
+
     dependencies {
         val room_version = "2.6.1"
 

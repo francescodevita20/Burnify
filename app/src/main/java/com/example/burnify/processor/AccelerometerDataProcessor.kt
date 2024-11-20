@@ -5,8 +5,13 @@ import com.example.burnify.database.AccelerometerProcessedSample
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.sqrt
+import kotlin.math.abs
+import kotlin.math.log10
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import org.apache.commons.math3.transform.FastFourierTransformer
+import org.apache.commons.math3.transform.DftNormalization
+import org.apache.commons.math3.transform.TransformType
 
 class AccelerometerDataProcessor {
 
@@ -19,7 +24,7 @@ class AccelerometerDataProcessor {
 
         val currentDateTime = LocalDateTime.now()
         val formattedDateTime = currentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-
+        val spectralLogEnergyBands = calculateSpectralLogEnergyBands(magnitudes)
         return AccelerometerProcessedSample(
             processedAt = formattedDateTime,
             meanX = calculateMean(xValues),
@@ -40,12 +45,16 @@ class AccelerometerDataProcessor {
             thirdMoment = calculateMoment(magnitudes, 3),
             fourthMoment = calculateMoment(magnitudes, 4),
             entropyValue = calculateEntropy(magnitudes, 8),
-            spectralLogEnergy = calculateSpectralCharacteristics(magnitudes)["LogEnergy"] ?: 0f,
             spectralEntropy = calculateSpectralCharacteristics(magnitudes)["SpectralEntropy"] ?: 0f,
             autocorrelation = calculateAutocorrelation(magnitudes),
             correlationXY = calculateCorrelation(xValues, yValues),
             correlationXZ = calculateCorrelation(xValues, zValues),
-            correlationYZ = calculateCorrelation(yValues, zValues)
+            correlationYZ = calculateCorrelation(yValues, zValues),
+            energyBand0_0_5Hz = spectralLogEnergyBands["0-0.5Hz"] ?: 0f,
+            energyBand0_5_1Hz = spectralLogEnergyBands["0.5-1Hz"] ?: 0f,
+            energyBand1_3Hz = spectralLogEnergyBands["1-3Hz"] ?: 0f,
+            energyBand3_5Hz = spectralLogEnergyBands["3-5Hz"] ?: 0f,
+            energyBand5HzPlus = spectralLogEnergyBands[">5Hz"] ?: 0f
         )
     }
 
@@ -91,18 +100,12 @@ class AccelerometerDataProcessor {
 
         // Calculate entropy
         return -probabilities.filter { it > 0 }
-            .sumOf { p ->
-                if (p > 0) {
-                    p * ln(p.toDouble())  // Convert the log calculation to Double
-                } else {
-                    0.0  // Keep the value as Double
-                }
-            }.toFloat()  // Convert the final result to Float
+            .sumOf { p -> p * ln(p.toDouble()) }.toFloat()
     }
 
     private fun calculateSpectralCharacteristics(values: List<Float>): Map<String, Float> {
         val logEnergy = values.sumOf { it.pow(2).toDouble() }.let { ln(it) }.toFloat()
-        val spectralEntropy = calculateEntropy(values,8)
+        val spectralEntropy = calculateEntropy(values, 8)
         return mapOf("LogEnergy" to logEnergy, "SpectralEntropy" to spectralEntropy)
     }
 
@@ -110,13 +113,6 @@ class AccelerometerDataProcessor {
         val n = values.size
         val mean = calculateMean(values)
         return (0 until n - lag).sumOf { ((values[it] - mean) * (values[it + lag] - mean)).toDouble() }.toFloat() / (n - lag)
-    }
-
-    private fun calculateAxisCorrelation(xValues: List<Float>, yValues: List<Float>, zValues: List<Float>): Map<String, Float> {
-        val correlationXY = calculateCorrelation(xValues, yValues)
-        val correlationXZ = calculateCorrelation(xValues, zValues)
-        val correlationYZ = calculateCorrelation(yValues, zValues)
-        return mapOf("CorrelationXY" to correlationXY, "CorrelationXZ" to correlationXZ, "CorrelationYZ" to correlationYZ)
     }
 
     private fun calculateCorrelation(values1: List<Float>, values2: List<Float>): Float {
@@ -128,40 +124,44 @@ class AccelerometerDataProcessor {
             .toFloat() / (stdDev1 * stdDev2 * values1.size)
     }
 
-    // Funzione che ritorna tutti i valori calcolati come stringa
-    fun getResultsAsString(measurements: AccelerometerMeasurements): String {
-        // Elabora i dati in un oggetto AccelerometerProcessedSample
-        val processedSample = processMeasurementsToEntity(measurements)
+    private fun calculateSpectralLogEnergyBands(values: List<Float>): Map<String, Float> {
+        // Converti la lista Float in un DoubleArray
+        val doubleValues = values.map { it.toDouble() }.toDoubleArray()
+        val fft = FastFourierTransformer(DftNormalization.STANDARD) // Usa Apache Commons Math
 
-        return buildString {
-            appendLine("ProcessedAt: ${processedSample.processedAt}")
-            appendLine("MeanX: ${processedSample.meanX}")
-            appendLine("MeanY: ${processedSample.meanY}")
-            appendLine("MeanZ: ${processedSample.meanZ}")
-            appendLine("StandardDeviationX: ${processedSample.standardDeviationX}")
-            appendLine("StandardDeviationY: ${processedSample.standardDeviationY}")
-            appendLine("StandardDeviationZ: ${processedSample.standardDeviationZ}")
-            appendLine("Percentile25X: ${processedSample.percentile25X}")
-            appendLine("Percentile50X: ${processedSample.percentile50X}")
-            appendLine("Percentile75X: ${processedSample.percentile75X}")
-            appendLine("Percentile25Y: ${processedSample.percentile25Y}")
-            appendLine("Percentile50Y: ${processedSample.percentile50Y}")
-            appendLine("Percentile75Y: ${processedSample.percentile75Y}")
-            appendLine("Percentile25Z: ${processedSample.percentile25Z}")
-            appendLine("Percentile50Z: ${processedSample.percentile50Z}")
-            appendLine("Percentile75Z: ${processedSample.percentile75Z}")
-            appendLine("ThirdMoment: ${processedSample.thirdMoment}")
-            appendLine("FourthMoment: ${processedSample.fourthMoment}")
-            appendLine("EntropyValue: ${processedSample.entropyValue}")
-            appendLine("SpectralLogEnergy: ${processedSample.spectralLogEnergy}")
-            appendLine("SpectralEntropy: ${processedSample.spectralEntropy}")
-            appendLine("Autocorrelation: ${processedSample.autocorrelation}")
-            appendLine("CorrelationXY: ${processedSample.correlationXY}")
-            appendLine("CorrelationXZ: ${processedSample.correlationXZ}")
-            appendLine("CorrelationYZ: ${processedSample.correlationYZ}")
+        // Esegui la FFT
+        val fftResult = fft.transform(doubleValues, TransformType.FORWARD)
+
+        // Calcola le energie nelle bande
+        val bandEnergies = DoubleArray(5) { 0.0 }
+        val samplingRate = 50.0 // Frequenza di campionamento
+        val frequencies = (0 until fftResult.size / 2).map { it * (samplingRate / fftResult.size) }
+
+        for (i in frequencies.indices) {
+            val freq = frequencies[i]
+            val magnitude = fftResult[i].abs() // Magnitudine (modulo)
+            when {
+                freq <= 0.5 -> bandEnergies[0] += magnitude.pow(2)
+                freq <= 1.0 -> bandEnergies[1] += magnitude.pow(2)
+                freq <= 3.0 -> bandEnergies[2] += magnitude.pow(2)
+                freq <= 5.0 -> bandEnergies[3] += magnitude.pow(2)
+                else -> bandEnergies[4] += magnitude.pow(2)
+            }
         }
+
+        return mapOf(
+            "0-0.5Hz" to bandEnergies[0].toFloat(),
+            "0.5-1Hz" to bandEnergies[1].toFloat(),
+            "1-3Hz" to bandEnergies[2].toFloat(),
+            "3-5Hz" to bandEnergies[3].toFloat(),
+            ">5Hz" to bandEnergies[4].toFloat()
+        )
     }
 
+
+    // Funzione che calcola la Time Entropy
+    private fun calculateTimeEntropy(values: List<Float>): Float {
+        val normalizedValues = values.map { (it - calculateMean(values)) / calculateStandardDeviation(values) }
+        return calculateEntropy(normalizedValues, 8) // Usa 8 bin per l'entropia
+    }
 }
-
-

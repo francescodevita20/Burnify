@@ -181,7 +181,16 @@ else if (daoName == "gyroscope") {
 fun saveProcessedDataToDatabase(context: Context, processedData: GyroscopeProcessedSample) {
 
     // Esegui l'inserimento nel database in un thread separato
+    val correlationXY = if (processedData.correlationXY?.isNaN() == true) null else processedData.correlationXY
+    val correlationXZ = if (processedData.correlationXZ?.isNaN() == true) null else processedData.correlationXZ
+    val correlationYZ = if (processedData.correlationYZ?.isNaN() == true) null else processedData.correlationYZ
+    // Esegui l'inserimento nel database in un thread separato
 
+    val updatedProcessedData = processedData.copy(
+        correlationXY = correlationXY,
+        correlationXZ = correlationXZ,
+        correlationYZ = correlationYZ
+    )
     Thread {
         println("Salvataggio in corso...")
         val db = AppDatabaseProvider.getInstance(context) // Usa il singleton
@@ -194,6 +203,18 @@ fun saveProcessedDataToDatabase(context: Context, processedData: GyroscopeProces
 }
 
 fun saveProcessedDataToDatabase(context: Context, processedData: MagnetometerProcessedSample) {
+
+    val correlationXY = if (processedData.correlationXY?.isNaN() == true) null else processedData.correlationXY
+    val correlationXZ = if (processedData.correlationXZ?.isNaN() == true) null else processedData.correlationXZ
+    val correlationYZ = if (processedData.correlationYZ?.isNaN() == true) null else processedData.correlationYZ
+    // Esegui l'inserimento nel database in un thread separato
+
+    val updatedProcessedData = processedData.copy(
+        correlationXY = correlationXY,
+        correlationXZ = correlationXZ,
+        correlationYZ = correlationYZ
+    )
+
     Thread {
     println("Salvataggio in corso...")
     val db = AppDatabaseProvider.getInstance(context) // Usa il singleton

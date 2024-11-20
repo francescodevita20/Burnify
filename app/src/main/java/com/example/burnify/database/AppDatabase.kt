@@ -8,7 +8,7 @@ import com.example.burnify.dao.AccelerometerDao
 import com.example.burnify.dao.GyroscopeDao
 import com.example.burnify.dao.MagnetometerDao
 
-@Database(entities = [AccelerometerProcessedSample::class, GyroscopeProcessedSample::class, MagnetometerProcessedSample::class], version = 4)
+@Database(entities = [AccelerometerProcessedSample::class, GyroscopeProcessedSample::class, MagnetometerProcessedSample::class], version = 5)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accelerometerDao(): AccelerometerDao
     abstract fun gyroscopeDao(): GyroscopeDao
