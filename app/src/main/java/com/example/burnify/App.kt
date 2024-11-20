@@ -13,6 +13,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.burnify.ui.components.Navbar
 import com.example.burnify.ui.screens.ScreenContent
@@ -24,7 +25,7 @@ import com.example.burnify.viewmodel.MagnetometerViewModel
 @Composable
 fun App(accelerometerViewModel: AccelerometerViewModel, gyroscopeViewModel: GyroscopeViewModel, magnetometerViewModel: MagnetometerViewModel) {
     var selectedPage by remember { mutableStateOf("Today") }
-
+    val context = LocalContext.current
     BurnifyTheme {
         Surface(
             modifier = Modifier
@@ -50,7 +51,8 @@ fun App(accelerometerViewModel: AccelerometerViewModel, gyroscopeViewModel: Gyro
                             selectedPage = selectedPage,
                             accelerometerViewModel = accelerometerViewModel,
                             gyroscopeViewModel = gyroscopeViewModel,
-                            magnetometerViewModel = magnetometerViewModel
+                            magnetometerViewModel = magnetometerViewModel,
+                            context = context
                         )
                     }
 

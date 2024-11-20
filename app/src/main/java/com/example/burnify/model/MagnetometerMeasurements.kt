@@ -72,7 +72,7 @@ class MagnetometerSample() : Parcelable {
 class MagnetometerMeasurements : Parcelable {
     private val samples = mutableListOf<MagnetometerSample>()
     private var samplesCount = 0
-    private var maxSize = 500
+    private var maxSize = 512
     private val magnetometerDataProcessor = MagnetometerDataProcessor()
 
     constructor()

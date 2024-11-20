@@ -24,11 +24,11 @@ class MagnetometerService : Service(), SensorEventListener {
 
     // SensorManager per accedere ai sensori di sistema
     private lateinit var sensorManager: SensorManager
-    private val samplesBatch = 20
     private var magnetometer: Sensor? = null
 
-    // Intervallo di campionamento in millisecondi
-    private val samplingInterval: Long = 250L
+    // Sampling rate e batch size
+    private var samplingRateInMillis: Long = 1000
+    private var samplesBatch: Int = 20
 
     // Contenitore per i dati del magnetometro
     private val magnetometerData = MagnetometerMeasurements()
@@ -42,7 +42,6 @@ class MagnetometerService : Service(), SensorEventListener {
 
     override fun onCreate() {
         super.onCreate()
-        println("Servizio Magnetometro inizializzato")
 
         // Configura la notifica per il Foreground Service
         startForegroundWithNotification()
@@ -55,6 +54,28 @@ class MagnetometerService : Service(), SensorEventListener {
         viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(
             MagnetometerViewModel::class.java
         )
+
+        // Leggi il "workingmode" dalle SharedPreferences
+        val sharedPreferences = getSharedPreferences("setting", Context.MODE_PRIVATE)
+        val workingMode = sharedPreferences.getString("workingmode", "maxaccuracy") ?: "maxaccuracy"
+
+        // Imposta il sampling rate e il batch size in base al "workingmode"
+        when (workingMode) {
+            "maxbatterysaving" -> {
+                samplingRateInMillis = 1000 // Esempio: 5 secondi per risparmiare batteria
+                samplesBatch = 64 // Dimensione del batch più grande per risparmiare batteria
+            }
+            "maxaccuracy" -> {
+                samplingRateInMillis = 250 // Esempio: 500 ms per massima precisione
+                samplesBatch = 32 // Dimensione del batch più piccola per alta precisione
+            }
+            else -> {
+                samplingRateInMillis = 1000 // Impostazione predefinita: 1 secondo
+                samplesBatch = 64 // Impostazione predefinita del batch
+            }
+        }
+
+        println("Servizio avviato con Sampling Rate: ${samplingRateInMillis}ms, Batch Size: $samplesBatch")
 
         // Registra il listener del sensore
         magnetometer?.let {
@@ -87,6 +108,18 @@ class MagnetometerService : Service(), SensorEventListener {
         notificationHelper.notify(1000, groupNotification)
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Recupera il valore del sampling rate dall'Intent
+        samplingRateInMillis = (intent?.getDoubleExtra("samplingRateInSeconds", 1.0)?.times(1000))?.toLong() ?: 1000
+
+        println("Servizio avviato con Sampling Rate: ${samplingRateInMillis}ms")
+
+        // Avvia la raccolta dati
+        startDataCollection()
+
+        return START_STICKY
+    }
+
     private fun startDataCollection() {
         handler.postDelayed(object : Runnable {
             override fun run() {
@@ -94,14 +127,9 @@ class MagnetometerService : Service(), SensorEventListener {
                 viewModel.updateMagnetometerData(magnetometerData)
 
                 // Ripianifica l'aggiornamento
-                handler.postDelayed(this, samplingInterval)
+                handler.postDelayed(this, samplingRateInMillis)
             }
-        }, samplingInterval)
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        println("Servizio Magnetometro avviato con onStartCommand")
-        return START_STICKY
+        }, samplingRateInMillis)
     }
 
     private var samplesCount = 0

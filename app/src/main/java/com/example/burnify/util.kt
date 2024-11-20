@@ -20,60 +20,54 @@ import androidx.work.WorkerParameters
 import java.util.concurrent.TimeUnit
 
 
-fun setSharedPreferences(context: Context, newMap: Map<String, Any>,sharedPreferencesName: String) {
+fun setSharedPreferences(context: Context, newMap: Map<String, Any>, sharedPreferencesName: String) {
     try {
+        // Get SharedPreferences
         val sharedPreferences = context.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
-        // Recupera la lista esistente
+        // Use Gson to serialize the map
         val gson = GsonBuilder().serializeSpecialFloatingPointValues().create()
-        val json = sharedPreferences.getString(sharedPreferencesName, null)
-        val type = object : TypeToken<List<Map<String, Any>>>() {}.type
-        val existingList: MutableList<Map<String, Any>> = if (json.isNullOrEmpty()) {
-            mutableListOf() // Se non esiste, crea una nuova lista vuota
-        } else {
-            gson.fromJson(json, type) // Altrimenti, deserializza l'elenco esistente
-        }
 
-        // Aggiungi la nuova mappa
-        existingList.add(newMap)
+        // Serialize the map and save it as a JSON string
+        val updatedJson = gson.toJson(newMap)
 
-        // Salva nuovamente la lista aggiornata
-        val updatedJson = gson.toJson(existingList)
+        // Save the serialized JSON in SharedPreferences
         editor.putString(sharedPreferencesName, updatedJson)
         editor.apply()
 
-        println("Mappa aggiunta e salvata correttamente nello SharedPreferences.")
+        println("Map saved successfully in SharedPreferences.")
     } catch (e: Exception) {
-        println("Errore durante il salvataggio della mappa: ${e.message}")
+        println("Error saving map: ${e.message}")
     }
 }
 
 
 
 
-fun getSharedPreferences(context: Context,sharedPreferencesName: String): List<Map<String, Any>>? {
+
+fun getSharedPreferences(context: Context, sharedPreferencesName: String): Map<String, Any>? {
     return try {
         val sharedPreferences = context.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE)
         val json = sharedPreferences.getString(sharedPreferencesName, null)
 
         if (json.isNullOrEmpty()) {
-            println("Nessun dato trovato nelle SharedPreferences.")
+            println("No data found in SharedPreferences.")
             return null
         } else {
             val gson = Gson()
-            val type = object : TypeToken<List<Map<String, Any>>>() {}.type
-            val listOfMaps: List<Map<String, Any>> = gson.fromJson(json, type)
-            println("SharedPreferences: $sharedPreferencesName recuperata con successo.")
-            return listOfMaps
+            val type = object : TypeToken<Map<String, Any>>() {}.type
+            val map: Map<String, Any> = gson.fromJson(json, type)
+            println("SharedPreferences retrieved successfully.")
+            map
         }
     } catch (e: Exception) {
-        println("Errore durante il recupero dei dati: ${e.message}")
+        println("Error retrieving data: ${e.message}")
         null
     }
-
-
 }
+
+
 fun clearSharedPreferences(context: Context,sharedPreferencesName: String) {
     try {
 

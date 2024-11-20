@@ -24,20 +24,18 @@ class GyroscopeService : Service(), SensorEventListener {
 
     // SensorManager to access system sensors
     private lateinit var sensorManager: SensorManager
-    private val samplesBatch = 20
-
-    private val sample = GyroscopeSample()
-    // Gyroscope sensor instance
     private var gyroscope: Sensor? = null
 
-    // Sampling interval in milliseconds
-    private val samplingInterval: Long = 250L
+    // Sampling rate and batch size
+    private var samplingRateInMillis: Long = 1000
+    private var samplesBatch: Int = 20
 
     // Container for gyroscope data
     private val gyroscopeData = GyroscopeMeasurements()
 
     // Handler for periodic updates
     private val handler = Handler(Looper.getMainLooper())
+    private val sample = GyroscopeSample()
 
     // ViewModel to manage gyroscope data
     private lateinit var viewModel: GyroscopeViewModel
@@ -56,6 +54,28 @@ class GyroscopeService : Service(), SensorEventListener {
         viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(
             GyroscopeViewModel::class.java
         )
+
+        // Read "workingmode" from SharedPreferences
+        val sharedPreferences = getSharedPreferences("setting", Context.MODE_PRIVATE)
+        val workingMode = sharedPreferences.getString("workingmode", "maxaccuracy") ?: "maxaccuracy"
+
+        // Set sampling rate and batch size based on "workingmode"
+        when (workingMode) {
+            "maxbatterysaving" -> {
+                samplingRateInMillis = 1000 // For example, 5 seconds
+                samplesBatch = 64 // Larger batch size to save battery
+            }
+            "maxaccuracy" -> {
+                samplingRateInMillis = 250 // For example, 500 ms for maximum accuracy
+                samplesBatch = 32 // Smaller batch size for higher accuracy
+            }
+            else -> {
+                samplingRateInMillis = 1000 // Default value of 1 second
+                samplesBatch = 64 // Default batch size
+            }
+        }
+
+        println("Servizio avviato con Sampling Rate: ${samplingRateInMillis}ms, Batch Size: $samplesBatch")
 
         // Register the gyroscope listener if available
         gyroscope?.let {
@@ -83,7 +103,7 @@ class GyroscopeService : Service(), SensorEventListener {
         val notification = notificationHelper.createServiceNotification("Gyroscope Service")
         startForeground(1003, notification)
 
-        // Aggiorna o crea la notifica principale
+        // Update or create the main notification
         val groupNotification = notificationHelper.createGroupNotification()
         notificationHelper.notify(1000, groupNotification)
     }
@@ -95,9 +115,9 @@ class GyroscopeService : Service(), SensorEventListener {
                 viewModel.updateGyroscopeData(gyroscopeData)
 
                 // Reschedule the update
-                handler.postDelayed(this, samplingInterval)
+                handler.postDelayed(this, samplingRateInMillis)
             }
-        }, samplingInterval)
+        }, samplingRateInMillis)
     }
 
     private var samplesCount = 0
@@ -131,7 +151,14 @@ class GyroscopeService : Service(), SensorEventListener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        println("Gyroscope Service started with onStartCommand")
+        // Get the sampling rate from the Intent
+        samplingRateInMillis = (intent?.getDoubleExtra("samplingRateInSeconds", 1.0)?.times(1000))?.toLong() ?: 1000
+
+        println("Servizio avviato con Sampling Rate: ${samplingRateInMillis}ms")
+
+        // Start the data collection
+        startDataCollection()
+
         return START_STICKY
     }
 

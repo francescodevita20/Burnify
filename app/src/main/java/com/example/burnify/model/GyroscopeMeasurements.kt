@@ -77,7 +77,7 @@ class GyroscopeSample() : Parcelable {
 class GyroscopeMeasurements : Parcelable {
     private val samples = mutableListOf<GyroscopeSample>()
     private var samplesCount = 0
-    private var maxSize = 500
+    private var maxSize = 512
     private val gyroscopeDataProcessor = GyroscopeDataProcessor()
 
     // Costruttore vuoto per Parcelable

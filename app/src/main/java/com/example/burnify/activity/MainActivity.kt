@@ -15,6 +15,8 @@ import com.example.burnify.scheduleDatabaseCleanup // Assicurati che questa funz
 import com.example.burnify.service.AccelerometerService
 import com.example.burnify.service.GyroscopeService
 import com.example.burnify.service.MagnetometerService
+import com.example.burnify.setSharedPreferences
+import com.example.burnify.getSharedPreferences
 import com.example.burnify.viewmodel.AccelerometerViewModel
 import com.example.burnify.viewmodel.GyroscopeViewModel
 import com.example.burnify.viewmodel.MagnetometerViewModel
@@ -76,15 +78,40 @@ class MainActivity : ComponentActivity() {
 
     private fun startSensorServices() {
         // Avvia il servizio accelerometro in foreground
-        val accelerometerServiceIntent = Intent(this, AccelerometerService::class.java)
+        val accelerometerServiceIntent = Intent(this, AccelerometerService::class.java).apply {
+            putExtra("workingmode", (getSharedPreferences(applicationContext,"setting")?.get("workingmode")).toString()) // Passa il valore al servizio
+        }
         startForegroundService(accelerometerServiceIntent)
 
         // Avvia il servizio giroscopio in foreground
-        val gyroscopeServiceIntent = Intent(this, GyroscopeService::class.java)
+        val gyroscopeServiceIntent = Intent(this, GyroscopeService::class.java).apply {
+            putExtra("workingmode", (getSharedPreferences(applicationContext,"setting")?.get("workingmode")).toString()) // Passa il valore al servizio
+        }
         startForegroundService(gyroscopeServiceIntent)
 
         // Avvia il servizio magnetometro in foreground
-        val magnetometerServiceIntent = Intent(this, MagnetometerService::class.java)
+        val magnetometerServiceIntent = Intent(this, MagnetometerService::class.java).apply {
+            putExtra("workingmode", (getSharedPreferences(applicationContext,"setting")?.get("workingmode")).toString()) // Passa il valore al servizio
+        }
         startForegroundService(magnetometerServiceIntent)
     }
+
+    private fun getSettings() {
+        val settingsMap = getSharedPreferences(applicationContext, "settings")
+
+        if (settingsMap == null || settingsMap.isEmpty() || settingsMap.containsKey("sampling rate") ) {
+            val defaultMap = mapOf("sampling rate" to 0.5)
+            setSharedPreferences(applicationContext, defaultMap, "settings")
+            println("Impostazioni non trovate, valore predefinito impostato.")
+            // Usa il valore predefinito
+        } else {
+            println("Impostazioni recuperate con successo. + ${settingsMap["sampling rate"]}")
+
+            // Usa le impostazioni recuperate
+        }
+    }
+
+
 }
+
+

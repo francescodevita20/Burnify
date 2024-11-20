@@ -77,7 +77,7 @@ class AccelerometerSample() : Parcelable {
 class AccelerometerMeasurements : Parcelable {
     private val samples = mutableListOf<AccelerometerSample>()
     private var samplesCount = 0
-    private var maxSize = 500
+    private var maxSize = 512
     private val accelerometerDataProcessor = AccelerometerDataProcessor()
 
     // Costruttore vuoto per Parcelable
