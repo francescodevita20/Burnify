@@ -2,6 +2,10 @@ package com.example.burnify.database
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 
 @Entity(tableName = "accelerometer_processed_sample")
 data class AccelerometerProcessedSample(
@@ -140,4 +144,21 @@ data class MagnetometerProcessedSample(
                 "Spectral Entropy: $spectralEntropy, Autocorrelation: $autocorrelation, " +
                 "Correlation XY: $correlationXY, XZ: $correlationXZ, YZ: $correlationYZ" + "Spectral Log Energy Bands: "
     }}
+
+@Entity(tableName = "input_model")
+data class InputModel(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val processedAt: String,
+    var accX: Float? = Float.NaN,
+    var accY: Float? = Float.NaN,
+    var accZ: Float? = Float.NaN,
+    var gyroX: Float? = Float.NaN,  // Assicurati che abbia un valore predefinito
+    var gyroY: Float? = Float.NaN,
+    var gyroZ: Float? = Float.NaN,
+    var magnX: Float? = Float.NaN,
+    var magnY: Float? = Float.NaN,
+    var magnZ: Float? = Float.NaN,
+    var label: String? = null
+)
+
 

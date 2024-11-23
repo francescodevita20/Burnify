@@ -3,9 +3,13 @@ package com.example.burnify.model
 import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
+import com.example.burnify.addInputModel
 import com.example.burnify.processor.MagnetometerDataProcessor
 import com.example.burnify.retrieveProcessedDataFromDatabase
 import com.example.burnify.saveProcessedDataToDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MagnetometerSample() : Parcelable {
     var x: Float = 0f
@@ -109,6 +113,9 @@ class MagnetometerMeasurements : Parcelable {
 
 
                 saveProcessedDataToDatabase(context,processedData)
+                CoroutineScope(Dispatchers.Main).launch {
+                    addInputModel(processedData, context)
+                }
                 retrieveProcessedDataFromDatabase(context,"magnetometer")
             } catch (e: Exception) {
                 println("Errore durante l'elaborazione: ${e.message}")

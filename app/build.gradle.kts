@@ -56,6 +56,9 @@ dependencies {
     implementation ("androidx.compose.ui:ui:1.5.1") // Use the latest version
     implementation ("androidx.compose.foundation:foundation:1.5.1")
     implementation ("org.apache.commons:commons-math3:3.6.1")
+    implementation ("org.tensorflow:tensorflow-lite:2.13.0")
+    implementation ("org.tensorflow:tensorflow-lite-support:0.4.4")
+    implementation ("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0")
 
 
     dependencies {
@@ -88,6 +91,8 @@ dependencies {
 
         // optional - Paging 3 Integration
         implementation("androidx.room:room-paging:$room_version")
+
+
     }
 
 
