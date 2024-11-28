@@ -1,6 +1,5 @@
 package com.example.burnify.service
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -22,26 +21,24 @@ import com.example.burnify.viewmodel.MagnetometerViewModel
 
 class MagnetometerService : Service(), SensorEventListener {
 
-    // SensorManager per accedere ai sensori di sistema
     private lateinit var sensorManager: SensorManager
     private var magnetometer: Sensor? = null
 
-    // Sampling rate e batch size
-    private var samplingRateInMillis: Long = 1000
-    private var samplesBatch: Int = 64
+    private var samplingRateInMillis: Long = 1000 // Default value: 1 second
+    private var samplesBatch: Int = 100 // Default value: 64 samples per batch
 
-    // Contenitore per i dati del magnetometro
     private val magnetometerData = MagnetometerMeasurements()
-
-    // Handler per eseguire aggiornamenti periodici
     private val handler = Handler(Looper.getMainLooper())
     private val sample = MagnetometerSample()
 
-    // ViewModel per gestire i dati del magnetometro
     private lateinit var viewModel: MagnetometerViewModel
+
+    private var samplesCount = 0
 
     override fun onCreate() {
         super.onCreate()
+
+        println("Servizio Magnetometro inizializzato")
 
         // Configura la notifica per il Foreground Service
         startForegroundWithNotification()
@@ -51,29 +48,12 @@ class MagnetometerService : Service(), SensorEventListener {
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
 
         // Inizializza il ViewModel
-        viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(
-            MagnetometerViewModel::class.java
-        )
+        viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(MagnetometerViewModel::class.java)
 
-        // Leggi il "workingmode" dalle SharedPreferences
+        // Impostazioni di "working mode"
         val sharedPreferences = getSharedPreferences("setting", Context.MODE_PRIVATE)
         val workingMode = sharedPreferences.getString("workingmode", "maxaccuracy") ?: "maxaccuracy"
-
-        // Imposta il sampling rate e il batch size in base al "workingmode"
-        when (workingMode) {
-            "maxbatterysaving" -> {
-                samplingRateInMillis = 1000 // Esempio: 5 secondi per risparmiare batteria
-                samplesBatch = 64 // Dimensione del batch più grande per risparmiare batteria
-            }
-            "maxaccuracy" -> {
-                samplingRateInMillis = 250 // Esempio: 500 ms per massima precisione
-                samplesBatch = 32 // Dimensione del batch più piccola per alta precisione
-            }
-            else -> {
-                samplingRateInMillis = 1000 // Impostazione predefinita: 1 secondo
-                samplesBatch = 64 // Impostazione predefinita del batch
-            }
-        }
+        setSamplingRateAndBatchSize(workingMode)
 
         println("Servizio avviato con Sampling Rate: ${samplingRateInMillis}ms, Batch Size: $samplesBatch")
 
@@ -86,36 +66,55 @@ class MagnetometerService : Service(), SensorEventListener {
         startDataCollection()
     }
 
+    private fun setSamplingRateAndBatchSize(workingMode: String) {
+        when (workingMode) {
+            "maxbatterysaving" -> {
+                samplingRateInMillis = 1000 // 1 secondo
+                samplesBatch = 100
+            }
+            "maxaccuracy" -> {
+                samplingRateInMillis = 250 // 250 ms per massima precisione
+                samplesBatch = 50
+            }
+            else -> {
+                samplingRateInMillis = 1000 // Default 1 secondo
+                samplesBatch = 100
+            }
+        }
+    }
     private fun startForegroundWithNotification() {
-        // Crea il canale di notifica per Android 8.0 e versioni successive
+        val channelId = "MagnetometerServiceChannel"
+        val channelName = "Servizio Magnetometro"
+        val notificationId = 1003
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                "MagnetometerServiceChannel",
-                "Servizio Magnetometro",
+                channelId,
+                channelName,
                 NotificationManager.IMPORTANCE_LOW
             )
             val manager = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(channel)
         }
 
-        // Crea la notifica
         val notificationHelper = NotificationHelper(this)
-        val notification = notificationHelper.createServiceNotification("Magnetometer Service")
-        startForeground(1002, notification)
 
-        // Aggiorna o crea la notifica principale
+        // Creazione notifica specifica per Gyroscope Service
+        val magnetometerNotification = notificationHelper.createServiceNotification("Magnetometer Service")
+        notificationHelper.notify(notificationId, magnetometerNotification)
+
+        // Creazione e pubblicazione della notifica di gruppo
         val groupNotification = notificationHelper.createGroupNotification()
         notificationHelper.notify(1000, groupNotification)
+
+        // Avvia in foreground con la notifica specifica
+        startForeground(notificationId, magnetometerNotification)
     }
 
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Recupera il valore del sampling rate dall'Intent
-        samplingRateInMillis = (intent?.getDoubleExtra("samplingRateInSeconds", 1.0)?.times(1000))?.toLong() ?: 1000
-
+        samplingRateInMillis = (intent?.getDoubleExtra("samplingRateInSeconds", 1.0)?.times(1000))?.toLong() ?: samplingRateInMillis
         println("Servizio avviato con Sampling Rate: ${samplingRateInMillis}ms")
-
-        // Avvia la raccolta dati
-        startDataCollection()
 
         return START_STICKY
     }
@@ -123,31 +122,32 @@ class MagnetometerService : Service(), SensorEventListener {
     private fun startDataCollection() {
         handler.postDelayed(object : Runnable {
             override fun run() {
-                // Aggiorna i dati nel ViewModel
-                viewModel.updateMagnetometerData(magnetometerData)
 
-                // Ripianifica l'aggiornamento
-                handler.postDelayed(this, samplingRateInMillis)
-            }
+                    viewModel.updateMagnetometerData(magnetometerData)
+                    handler.postDelayed(this, samplingRateInMillis)
+                }
         }, samplingRateInMillis)
     }
 
-    private var samplesCount = 0
     override fun onSensorChanged(event: SensorEvent?) {
+        if (SensorDataManager.magnetometerIsFilled) {
+            println("Il servizio accelerometro è in pausa, aspetta gli altri servizi")
+            return}
+        else{
         event?.let {
             if (it.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
-                // Imposta il campione
                 sample.setSample(it.values[0], it.values[1], it.values[2])
                 magnetometerData.addSample(applicationContext, sample)
 
                 samplesCount++
                 if (samplesCount >= samplesBatch) {
+
                     sendMagnetometerData()
                     samplesCount = 0
                 }
             }
         }
-    }
+    }}
 
     private fun sendMagnetometerData() {
         val intent = Intent("com.example.burnify.MAGNETOMETER_DATA")
@@ -157,15 +157,12 @@ class MagnetometerService : Service(), SensorEventListener {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Annulla la registrazione del listener
         sensorManager.unregisterListener(this)
         handler.removeCallbacksAndMessages(null)
         println("Servizio Magnetometro terminato")
     }
 
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        // Non richiesto in questo esempio
-    }
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
     override fun onBind(intent: Intent?): IBinder? = null
 }

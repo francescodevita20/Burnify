@@ -309,7 +309,7 @@ fun scheduleDatabaseCleanup(context: Context) {
 
     WorkManager.getInstance(context).enqueue(workRequest)
 }
-
+/*
 
 
 
@@ -576,3 +576,4 @@ private fun isFull(input: InputModel): Boolean {
 private fun Float?.replaceNaNWithNull(): Float? {
     return if (this?.isNaN() == true) null else this
 }
+*/

@@ -1,5 +1,6 @@
 package com.example.burnify.service
 
+import SensorDataManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -17,34 +18,29 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.burnify.NotificationHelper
 import com.example.burnify.model.AccelerometerMeasurements
 import com.example.burnify.model.AccelerometerSample
-import com.example.burnify.scheduleDatabaseCleanup
 import com.example.burnify.viewmodel.AccelerometerViewModel
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class AccelerometerService : Service(), SensorEventListener {
 
-    // SensorManager per accedere ai sensori di sistema
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
 
-    // Variabili per il sampling rate e il batch size
     private var samplingRateInMillis: Long = 1000 // Default value: 1 second
-    private var samplesBatch: Int = 64 // Default value: 20 samples per batch
+    private var samplesBatch: Int = 100 // Default value: 64 samples per batch
 
-    // Contenitore per i dati dell'accelerometro
     private val accelerometerData = AccelerometerMeasurements()
-
-    // Handler per eseguire aggiornamenti periodici
     private val handler = Handler(Looper.getMainLooper())
     private val sample = AccelerometerSample()
 
-    // ViewModel per gestire i dati dell'accelerometro
     private lateinit var viewModel: AccelerometerViewModel
 
+    private var samplesCount = 0
     override fun onCreate() {
         super.onCreate()
 
         println("Servizio Accelerometro inizializzato")
-        scheduleDatabaseCleanup(applicationContext)
 
         // Configura la notifica per il Foreground Service
         startForegroundWithNotification()
@@ -54,29 +50,12 @@ class AccelerometerService : Service(), SensorEventListener {
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
         // Inizializza il ViewModel
-        viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(
-            AccelerometerViewModel::class.java
-        )
+        viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(AccelerometerViewModel::class.java)
 
-        // Leggi il "workingmode" dalle SharedPreferences
+        // Impostazioni di "working mode"
         val sharedPreferences = getSharedPreferences("setting", Context.MODE_PRIVATE)
         val workingMode = sharedPreferences.getString("workingmode", "maxaccuracy") ?: "maxaccuracy"
-
-        // Imposta il sampling rate e il batch size in base al "workingmode"
-        when (workingMode) {
-            "maxbatterysaving" -> {
-                samplingRateInMillis = 1000 // Ad esempio, 5 secondi
-                samplesBatch = 64 // Maggiore batch size per risparmiare batteria
-            }
-            "maxaccuracy" -> {
-                samplingRateInMillis = 250 // Ad esempio, 500 ms per massima precisione
-                samplesBatch = 32 // Minore batch size per una maggiore accuratezza
-            }
-            else -> {
-                samplingRateInMillis = 1000 // Valore predefinito di 1 secondo
-                samplesBatch = 64 // Batch di default
-            }
-        }
+        setSamplingRateAndBatchSize(workingMode)
 
         println("Servizio avviato con Sampling Rate: ${samplingRateInMillis}ms, Batch Size: $samplesBatch")
 
@@ -84,34 +63,62 @@ class AccelerometerService : Service(), SensorEventListener {
         accelerometer?.let {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
         }
+
+        // Avvia la raccolta dati
+        startDataCollection()
+    }
+
+    private fun setSamplingRateAndBatchSize(workingMode: String) {
+        when (workingMode) {
+            "maxbatterysaving" -> {
+                samplingRateInMillis = 1000 // 1 secondo
+                samplesBatch = 100
+            }
+            "maxaccuracy" -> {
+                samplingRateInMillis = 250 // 250 ms per massima precisione
+                samplesBatch = 50
+            }
+            else -> {
+                samplingRateInMillis = 1000 // Default 1 secondo
+                samplesBatch = 100
+            }
+        }
     }
 
     private fun startForegroundWithNotification() {
-        // Crea il canale di notifica per Android 8.0 e versioni successive
+        val channelId = "AccelerometerServiceChannel"
+        val channelName = "Servizio Accelerometro"
+        val notificationId = 1001
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                "AccelerometerServiceChannel",
-                "Servizio Accelerometro",
+                channelId,
+                channelName,
                 NotificationManager.IMPORTANCE_LOW
             )
             val manager = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(channel)
         }
 
-        // Crea la notifica
         val notificationHelper = NotificationHelper(this)
-        val notification = notificationHelper.createServiceNotification("Accelerometer Service")
 
-        // Avvia il servizio come Foreground Service
-        startForeground(1001, notification)
+        // Creazione notifica specifica per Accelerometer Service
+        val accelerometerNotification = notificationHelper.createServiceNotification("Accelerometer Service")
+        notificationHelper.notify(notificationId, accelerometerNotification)
 
+        // Creazione e pubblicazione della notifica di gruppo
         val groupNotification = notificationHelper.createGroupNotification()
         notificationHelper.notify(1000, groupNotification)
+
+        // Avvia in foreground con la notifica specifica
+        startForeground(notificationId, accelerometerNotification)
     }
 
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Avvia la raccolta dati
-        startDataCollection()
+        // Imposta sampling rate da intent, se presente
+        samplingRateInMillis = (intent?.getDoubleExtra("samplingRateInSeconds", 1.0)?.times(1000))?.toLong() ?: samplingRateInMillis
+        println("Servizio avviato con Sampling Rate: ${samplingRateInMillis}ms")
 
         return START_STICKY
     }
@@ -119,17 +126,20 @@ class AccelerometerService : Service(), SensorEventListener {
     private fun startDataCollection() {
         handler.postDelayed(object : Runnable {
             override fun run() {
-                // Aggiorna i dati nel ViewModel
-                viewModel.updateAccelerometerData(accelerometerData)
-
-                // Ripianifica l'aggiornamento
-                handler.postDelayed(this, samplingRateInMillis)
+                // Verifica se il servizio è in pausa, se sì, non aggiornare i dati
+                    viewModel.updateAccelerometerData(accelerometerData)
+                    // Ripianifica l'aggiornamento
+                    handler.postDelayed(this, samplingRateInMillis)
+                    //QUESTA E' LA RIGA CHE PORTA PROBLEMI DI SINCRONIZZAZIONE
             }
         }, samplingRateInMillis)
     }
 
-    private var samplesCount = 0
     override fun onSensorChanged(event: SensorEvent?) {
+        if (SensorDataManager.accelerometerIsFilled) {
+            println("Il servizio accelerometro è in pausa, aspetta gli altri servizi")
+            return}
+else{
         event?.let {
             if (it.sensor.type == Sensor.TYPE_ACCELEROMETER) {
                 sample.setSample(it.values[0], it.values[1], it.values[2])
@@ -137,11 +147,14 @@ class AccelerometerService : Service(), SensorEventListener {
 
                 samplesCount++
                 if (samplesCount >= samplesBatch) {
-                    sendAccelerometerData()
+                    // Solo quando il batch è pieno, invia i dati e metti in pausa
+                    sendAccelerometerData() // Riprende il campionamento dopo la pausa // Pausa di 5 secondi prima di riprendere
                     samplesCount = 0
                 }
             }
         }
+    }
+
     }
 
     private fun sendAccelerometerData() {

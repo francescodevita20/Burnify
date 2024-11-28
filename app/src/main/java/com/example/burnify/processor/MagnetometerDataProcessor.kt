@@ -15,10 +15,10 @@ class MagnetometerDataProcessor {
 
     fun processMeasurementsToEntity(measurements: MagnetometerMeasurements): MagnetometerProcessedSample {
         val samples = measurements.getSamples()
-        val xValues = samples.map { it.getSampleValues().first }
-        val yValues = samples.map { it.getSampleValues().second }
-        val zValues = samples.map { it.getSampleValues().third }
-        val magnitudes = samples.map { sqrt(it.getSampleValues().first.pow(2) + it.getSampleValues().second.pow(2) + it.getSampleValues().third.pow(2)) }
+        val xValues = samples.map { it.get(0)  }
+        val yValues = samples.map { it.get(1)  }
+        val zValues = samples.map { it.get(2)  }
+        val magnitudes = samples.map { sqrt(it.get(0).pow(2) + it.get(1).pow(2) + it.get(2).pow(2)) }
 
         val currentDateTime = LocalDateTime.now()
         val formattedDateTime = currentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))

@@ -133,19 +133,19 @@ fun DataScreen(
         displaySensorData(
             title = "Accelerometer Data",
             data = accelerometerData?.getSamples(),
-            lastSample = { accelerometerData?.getLastSample()?.getSampleValues().toString() ?: "No data" }
+            lastSample = { accelerometerData?.getSamples()?.lastOrNull().toString() ?: "No data" }
         )
 
         displaySensorData(
             title = "Gyroscope Data",
             data = gyroscopeData?.getSamples(),
-            lastSample = { gyroscopeData?.getLastSample()?.getSampleValues().toString() ?: "No data" }
+            lastSample = { gyroscopeData?.getSamples()?.lastOrNull().toString() ?: "No data" }
         )
 
         displaySensorData(
             title = "Magnetometer Data",
             data = magnetometerData?.getSamples(),
-            lastSample = { magnetometerData?.getLastSample()?.getSampleValues().toString() ?: "No data" }
+            lastSample = { magnetometerData?.getSamples()?.lastOrNull().toString() ?: "No data" }
         )
     }
 }

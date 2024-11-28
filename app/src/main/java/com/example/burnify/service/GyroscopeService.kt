@@ -1,6 +1,5 @@
 package com.example.burnify.service
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -22,118 +21,126 @@ import com.example.burnify.viewmodel.GyroscopeViewModel
 
 class GyroscopeService : Service(), SensorEventListener {
 
-    // SensorManager to access system sensors
     private lateinit var sensorManager: SensorManager
     private var gyroscope: Sensor? = null
 
-    // Sampling rate and batch size
-    private var samplingRateInMillis: Long = 1000
-    private var samplesBatch: Int = 64
+    private var samplingRateInMillis: Long = 1000 // Default value: 1 second
+    private var samplesBatch: Int = 100 // Default value: 64 samples per batch
 
-    // Container for gyroscope data
     private val gyroscopeData = GyroscopeMeasurements()
-
-    // Handler for periodic updates
     private val handler = Handler(Looper.getMainLooper())
     private val sample = GyroscopeSample()
 
-    // ViewModel to manage gyroscope data
     private lateinit var viewModel: GyroscopeViewModel
+
+    private var samplesCount = 0
 
     override fun onCreate() {
         super.onCreate()
 
-        // Set up the foreground notification for the service
+        println("Servizio Giroscopio inizializzato")
+
+        // Configura la notifica per il Foreground Service
         startForegroundWithNotification()
 
-        // Initialize the SensorManager and gyroscope sensor
+        // Inizializza il SensorManager
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 
-        // Initialize the ViewModel
-        viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(
-            GyroscopeViewModel::class.java
-        )
+        // Inizializza il ViewModel
+        viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(GyroscopeViewModel::class.java)
 
-        // Read "workingmode" from SharedPreferences
+        // Impostazioni di "working mode"
         val sharedPreferences = getSharedPreferences("setting", Context.MODE_PRIVATE)
         val workingMode = sharedPreferences.getString("workingmode", "maxaccuracy") ?: "maxaccuracy"
-
-        // Set sampling rate and batch size based on "workingmode"
-        when (workingMode) {
-            "maxbatterysaving" -> {
-                samplingRateInMillis = 1000 // For example, 5 seconds
-                samplesBatch = 64 // Larger batch size to save battery
-            }
-            "maxaccuracy" -> {
-                samplingRateInMillis = 250 // For example, 500 ms for maximum accuracy
-                samplesBatch = 32 // Smaller batch size for higher accuracy
-            }
-            else -> {
-                samplingRateInMillis = 1000 // Default value of 1 second
-                samplesBatch = 64 // Default batch size
-            }
-        }
+        setSamplingRateAndBatchSize(workingMode)
 
         println("Servizio avviato con Sampling Rate: ${samplingRateInMillis}ms, Batch Size: $samplesBatch")
 
-        // Register the gyroscope listener if available
+        // Registra il listener del sensore
         gyroscope?.let {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
         }
 
-        // Start periodic data collection
+        // Avvia la raccolta dati
         startDataCollection()
     }
 
+    private fun setSamplingRateAndBatchSize(workingMode: String) {
+        when (workingMode) {
+            "maxbatterysaving" -> {
+                samplingRateInMillis = 1000 // 1 secondo
+                samplesBatch = 100
+            }
+            "maxaccuracy" -> {
+                samplingRateInMillis = 250 // 250 ms per massima precisione
+                samplesBatch = 50
+            }
+            else -> {
+                samplingRateInMillis = 1000 // Default 1 secondo
+                samplesBatch = 100
+            }
+        }
+    }
+
     private fun startForegroundWithNotification() {
-        // Create a notification channel for Android 8.0 and above
+        val channelId = "GyroscopeServiceChannel"
+        val channelName = "Servizio Giroscopio"
+        val notificationId = 1002
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                "GyroscopeServiceChannel",
-                "Gyroscope Service",
+                channelId,
+                channelName,
                 NotificationManager.IMPORTANCE_LOW
             )
             val manager = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(channel)
         }
 
-        // Create the notification
         val notificationHelper = NotificationHelper(this)
-        val notification = notificationHelper.createServiceNotification("Gyroscope Service")
-        startForeground(1003, notification)
 
-        // Update or create the main notification
+        // Creazione notifica specifica per Gyroscope Service
+        val gyroscopeNotification = notificationHelper.createServiceNotification("Gyroscope Service")
+        notificationHelper.notify(notificationId, gyroscopeNotification)
+
+        // Creazione e pubblicazione della notifica di gruppo
         val groupNotification = notificationHelper.createGroupNotification()
         notificationHelper.notify(1000, groupNotification)
+
+        // Avvia in foreground con la notifica specifica
+        startForeground(notificationId, gyroscopeNotification)
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        samplingRateInMillis = (intent?.getDoubleExtra("samplingRateInSeconds", 1.0)?.times(1000))?.toLong() ?: samplingRateInMillis
+        println("Servizio avviato con Sampling Rate: ${samplingRateInMillis}ms")
+
+        return START_STICKY
     }
 
     private fun startDataCollection() {
         handler.postDelayed(object : Runnable {
             override fun run() {
-                // Update the ViewModel with gyroscope data
-                viewModel.updateGyroscopeData(gyroscopeData)
 
-                // Reschedule the update
-                handler.postDelayed(this, samplingRateInMillis)
+                    viewModel.updateGyroscopeData(gyroscopeData)
+                    handler.postDelayed(this, samplingRateInMillis)
+
             }
         }, samplingRateInMillis)
     }
 
-    private var samplesCount = 0
-
-    // Called when sensor data changes
     override fun onSensorChanged(event: SensorEvent?) {
+        if (SensorDataManager.gyroscopeIsFilled) {
+            println("Il servizio giroscopio è in pausa, aspetta gli altri servizi")
+            return}
+        else{
         event?.let {
             if (it.sensor.type == Sensor.TYPE_GYROSCOPE) {
-                // Reuse an existing sample to reduce object creation
                 sample.setSample(it.values[0], it.values[1], it.values[2])
-
                 gyroscopeData.addSample(applicationContext, sample)
 
                 samplesCount++
-
-                // Send data via broadcast when batch is collected
                 if (samplesCount >= samplesBatch) {
                     sendGyroscopeData()
                     samplesCount = 0
@@ -141,44 +148,22 @@ class GyroscopeService : Service(), SensorEventListener {
             }
         }
     }
-
-    // Send gyroscope data via broadcast
-    private fun sendGyroscopeData() {
-        val intent = Intent("com.example.burnify.GYROSCOPE_DATA").apply {
-            putExtra("data", gyroscopeData) // Include gyroscope data
-        }
-        sendBroadcast(intent)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Get the sampling rate from the Intent
-        samplingRateInMillis = (intent?.getDoubleExtra("samplingRateInSeconds", 1.0)?.times(1000))?.toLong() ?: 1000
-
-        println("Servizio avviato con Sampling Rate: ${samplingRateInMillis}ms")
-
-        // Start the data collection
-        startDataCollection()
-
-        return START_STICKY
+    private fun sendGyroscopeData() {
+        val intent = Intent("com.example.burnify.GYROSCOPE_DATA")
+        intent.putExtra("data", gyroscopeData)
+        sendBroadcast(intent)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-
-        // Unregister the sensor listener to free resources
         sensorManager.unregisterListener(this)
-
-        // Remove all callbacks and messages from the handler
         handler.removeCallbacksAndMessages(null)
-
-        println("Gyroscope Service terminated")
+        println("Servizio Giroscopio terminato")
     }
 
-    // Not used in this example
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        // No action needed
-    }
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
-    // Not used in this example
     override fun onBind(intent: Intent?): IBinder? = null
 }

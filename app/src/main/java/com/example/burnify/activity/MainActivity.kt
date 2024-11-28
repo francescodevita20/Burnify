@@ -11,7 +11,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import com.example.burnify.App
-import com.example.burnify.scheduleDatabaseCleanup // Assicurati che questa funzione sia importata correttamente
 import com.example.burnify.service.AccelerometerService
 import com.example.burnify.service.GyroscopeService
 import com.example.burnify.service.MagnetometerService
