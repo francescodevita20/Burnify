@@ -19,13 +19,14 @@ import com.example.burnify.getSharedPreferences
 import com.example.burnify.viewmodel.AccelerometerViewModel
 import com.example.burnify.viewmodel.GyroscopeViewModel
 import com.example.burnify.viewmodel.MagnetometerViewModel
+import com.example.burnify.viewmodel.PredictedActivityViewModel
 
 class MainActivity : ComponentActivity() {
 
     private val accelerometerViewModel: AccelerometerViewModel by viewModels()
     private val gyroscopeViewModel: GyroscopeViewModel by viewModels()
     private val magnetometerViewModel: MagnetometerViewModel by viewModels()
-
+    private val predictedActivityViewModel: PredictedActivityViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -40,7 +41,8 @@ class MainActivity : ComponentActivity() {
             App(
                 accelerometerViewModel = accelerometerViewModel,
                 gyroscopeViewModel = gyroscopeViewModel,
-                magnetometerViewModel = magnetometerViewModel
+                magnetometerViewModel = magnetometerViewModel,
+                predictedActivityViewModel = predictedActivityViewModel
             )
         }
     }

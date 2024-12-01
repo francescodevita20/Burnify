@@ -1,9 +1,9 @@
 package com.example.burnify.processor
 
 
-class CaloriesDataProcessor {
+object CaloriesDataProcessor {
 
-    fun processMeasurements(weight: Double, activityLevel: String, time: Double): Int {
+    fun processMeasurements(weight: Int, activityLevel: String, time: Float): Float {
         val met = when (activityLevel.lowercase()) {
             "sedentary" -> 1.2
             "light" -> 2.5
@@ -12,7 +12,10 @@ class CaloriesDataProcessor {
             "very active" -> 8.0
             else -> 1.2 // Default to sedentary if unrecognized
         }
-        val caloriesBurned: Int = (weight * met * time).toInt()
+
+        //TODO: FIX THE MET COMPUTING. (if 1, if 2, ...)
+
+        val caloriesBurned: Float = weight.toFloat() * met.toFloat() * time
         return caloriesBurned
     }
 }

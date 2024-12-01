@@ -21,9 +21,10 @@ import com.example.burnify.ui.theme.BurnifyTheme
 import com.example.burnify.viewmodel.AccelerometerViewModel
 import com.example.burnify.viewmodel.GyroscopeViewModel
 import com.example.burnify.viewmodel.MagnetometerViewModel
+import com.example.burnify.viewmodel.PredictedActivityViewModel
 
 @Composable
-fun App(accelerometerViewModel: AccelerometerViewModel, gyroscopeViewModel: GyroscopeViewModel, magnetometerViewModel: MagnetometerViewModel) {
+fun App(accelerometerViewModel: AccelerometerViewModel, gyroscopeViewModel: GyroscopeViewModel, magnetometerViewModel: MagnetometerViewModel,predictedActivityViewModel: PredictedActivityViewModel) {
     var selectedPage by remember { mutableStateOf("Today") }
     val context = LocalContext.current
     BurnifyTheme {
@@ -52,6 +53,7 @@ fun App(accelerometerViewModel: AccelerometerViewModel, gyroscopeViewModel: Gyro
                             accelerometerViewModel = accelerometerViewModel,
                             gyroscopeViewModel = gyroscopeViewModel,
                             magnetometerViewModel = magnetometerViewModel,
+                            predictedActivityViewModel = predictedActivityViewModel,
                             context = context
                         )
                     }

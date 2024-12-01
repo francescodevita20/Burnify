@@ -101,7 +101,7 @@ class MagnetometerMeasurements : Parcelable {
                 //retrieveProcessedDataFromDatabase(context, "magnetometer")
 
                 SensorDataManager.magnetometerIsFilled = true
-                SensorDataManager.setMagnetometerMeasurements(this)
+                SensorDataManager.setMagnetometerMeasurements(this,context)
 
             } catch (e: Exception) {
                 println("Error during processing: ${e.message}")

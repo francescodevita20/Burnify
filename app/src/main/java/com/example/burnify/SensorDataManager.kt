@@ -1,25 +1,37 @@
+import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
+import com.example.burnify.dao.ActivityPredictionDao
+import com.example.burnify.database.ActivityPrediction
+import com.example.burnify.database.AppDatabaseProvider
 import com.example.burnify.model.AccelerometerMeasurements
 import com.example.burnify.model.AccelerometerSample
 import com.example.burnify.model.GyroscopeMeasurements
 import com.example.burnify.model.MagnetometerMeasurements
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 object SensorDataManager {
     var accelerometerIsFilled: Boolean = false
     var gyroscopeIsFilled: Boolean = false
     var magnetometerIsFilled: Boolean = false
-
     var outputTensor: MutableList<MutableList<Float>> = createZeroMatrix().toMutableList()
 
-    // Assumiamo che AccelerometerMeasurements contenga una lista di AccelerometerSample
-    fun setAccelerometerMeasurements(accelerometerMeasurements: AccelerometerMeasurements) {
+
+
+    // Funzione per impostare il contesto
+    fun setAccelerometerMeasurements(accelerometerMeasurements: AccelerometerMeasurements,context: Context) {
         val samples = accelerometerMeasurements.getSamples()
 
         if (samples.size >= 500) {
@@ -31,7 +43,7 @@ object SensorDataManager {
             }
             println("accelerometerService is Stopped")
             if (outputTensorIsFull()) {
-                makePostRequestWithSensorData()
+                makePostRequestWithSensorData(context)
                 resetStateFlags()
                 println("Service States are Resumed")
                 outputTensor = createZeroMatrix()
@@ -41,12 +53,11 @@ object SensorDataManager {
         }
     }
 
-    fun setGyroscopeMeasurements(gyroscopeMeasurements: GyroscopeMeasurements) {
-        val samples = gyroscopeMeasurements.getSamples() // Recupera i campioni del giroscopio
+    fun setGyroscopeMeasurements(gyroscopeMeasurements: GyroscopeMeasurements,context: Context) {
+        val samples = gyroscopeMeasurements.getSamples()
 
         if (samples.size >= 500) {
             for (i in 0 until 500) {
-                // Aggiungi i valori del giroscopio nelle posizioni 3, 4, 5 (X, Y, Z)
                 outputTensor[i][3] = samples[i][0] // Assegna l'asse X del giroscopio
                 outputTensor[i][4] = samples[i][1] // Assegna l'asse Y del giroscopio
                 outputTensor[i][5] = samples[i][2] // Assegna l'asse Z del giroscopio
@@ -54,7 +65,7 @@ object SensorDataManager {
             gyroscopeIsFilled = true
             println("gyroscopeService is Stopped")
             if (outputTensorIsFull()) {
-                makePostRequestWithSensorData()
+                makePostRequestWithSensorData(context)
                 resetStateFlags()
                 outputTensor = createZeroMatrix()
                 println("Service States are Resumed")
@@ -64,38 +75,31 @@ object SensorDataManager {
         }
     }
 
-    fun setMagnetometerMeasurements(magnetometerMeasurements: MagnetometerMeasurements) {
-        val samples = magnetometerMeasurements.getSamples() // Recupera i campioni del giroscopio
+    fun setMagnetometerMeasurements(magnetometerMeasurements: MagnetometerMeasurements,context: Context) {
+        val samples = magnetometerMeasurements.getSamples()
 
         if (samples.size >= 500) {
             for (i in 0 until 500) {
-                // Aggiungi i valori del giroscopio nelle posizioni 3, 4, 5 (X, Y, Z)
-                outputTensor[i][6] = samples[i][0] // Assegna l'asse X del giroscopio
-                outputTensor[i][7] = samples[i][1] // Assegna l'asse Y del giroscopio
-                outputTensor[i][8] = samples[i][2] // Assegna l'asse Z del giroscopio
+                outputTensor[i][6] = samples[i][0] // Assegna l'asse X del magnetometro
+                outputTensor[i][7] = samples[i][1] // Assegna l'asse Y del magnetometro
+                outputTensor[i][8] = samples[i][2] // Assegna l'asse Z del magnetometro
             }
             magnetometerIsFilled = true
             println("magnetometerService is Stopped")
             if (outputTensorIsFull()) {
-                makePostRequestWithSensorData()
+                makePostRequestWithSensorData(context)
                 resetStateFlags()
                 outputTensor = createZeroMatrix()
                 println("Service States are Resumed")
             }
         } else {
-            println("Dati giroscopio insufficienti per riempire l'outputTensor")
+            println("Dati magnetometro insufficienti per riempire l'outputTensor")
         }
     }
-
 
     fun outputTensorIsFull(): Boolean {
-        if (accelerometerIsFilled == true && gyroscopeIsFilled == true && magnetometerIsFilled == true) {
-            return true
-        } else {
-            return false
-        }
+        return accelerometerIsFilled && gyroscopeIsFilled && magnetometerIsFilled
     }
-
 
     fun createZeroMatrix(): MutableList<MutableList<Float>> {
         val rows = 500
@@ -105,7 +109,7 @@ object SensorDataManager {
         }
     }
 
-    fun makePostRequestWithSensorData() {
+    fun makePostRequestWithSensorData(context: Context) {
         // Converti i dati in formato JSON
         val jsonData = convertOutputTensorToJson()
 
@@ -128,7 +132,25 @@ object SensorDataManager {
 
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
-                    println("HttpRequests" + "Risposta POST: ${response.body?.string()}")
+                    val bodyString = response.body?.string()
+                    if (bodyString != null) {
+                        println("HttpRequests: Risposta POST: $bodyString")
+                        try {
+                            val jsonObject = JSONObject(bodyString) // Parsing JSON
+                            val predictedClass = jsonObject.getInt("predicted_class")
+                            println("Predicted class: $predictedClass")
+                            GlobalScope.launch {
+                                val db = AppDatabaseProvider.getInstance(context) // Usa il singleton
+                                val dao = db.activityPredictionDao()
+                                insertActivityPredictionToDB(dao, predictedClass)
+                            }
+                        } catch (e: JSONException) {
+                            e.printStackTrace()
+                            println("Errore nel parsing JSON: ${e.message}")
+                        }
+                    } else {
+                        println("Il corpo della risposta è null")
+                    }
                 } else {
                     println("HttpRequests" + "Errore POST: ${response.code}")
                 }
@@ -138,42 +160,36 @@ object SensorDataManager {
 
     // Funzione per convertire l'outputTensor in JSON
     fun convertOutputTensorToJson(): String {
-        // Creo un JSONArray che conterrà tutte le righe della matrice
         val jsonArray = JSONArray()
 
-        // Supponiamo che outputTensor sia una variabile che contiene i dati della matrice 500x9
         for (i in 0 until 500) {
-            // Crea un JSONArray per la riga i-esima
             val row = JSONArray()
-
-            // Aggiungi i valori della riga (esempio: dalla matrice outputTensor)
             for (j in 0 until 9) {
-                row.put(outputTensor[i][j])  // Recupera il valore da outputTensor
+                row.put(outputTensor[i][j])
             }
-
-            // Aggiungi la riga al JSONArray
             jsonArray.put(row)
         }
 
-        // Costruisci l'oggetto JSON completo con il campo "data"
         val jsonObject = JSONObject()
         jsonObject.put("data", jsonArray)
         println(jsonObject.toString())
-        return jsonObject.toString()  // Restituisci il JSON come stringa
+        return jsonObject.toString()
     }
 
-
-    // Funzione per resettare i flag di stato
     fun resetStateFlags() {
         accelerometerIsFilled = false
         gyroscopeIsFilled = false
         magnetometerIsFilled = false
     }
 
+    suspend fun insertActivityPredictionToDB(dao: ActivityPredictionDao, label: Int) {
+        val currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 
+        val activityPrediction = ActivityPrediction(
+            processedAt = currentDateTime, // Aggiungi la data corrente
+            label = label // Aggiungi la label passata come input
+        )
 
+        dao.insertActivityPrediction(activityPrediction)
+    }
 }
-
-
-
-

@@ -102,7 +102,7 @@ class GyroscopeMeasurements : Parcelable {
 
 
                 SensorDataManager.gyroscopeIsFilled = true
-                SensorDataManager.setGyroscopeMeasurements(this)
+                SensorDataManager.setGyroscopeMeasurements(this,context)
 
 
             } catch (e: Exception) {

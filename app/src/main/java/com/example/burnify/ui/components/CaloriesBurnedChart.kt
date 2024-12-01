@@ -1,5 +1,3 @@
-package com.example.burnify.ui.components
-
 import android.graphics.Color
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
@@ -16,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
@@ -29,6 +28,7 @@ data class ActivityData(
 
 @Composable
 fun CaloriesBurnedChart(activityData: List<ActivityData>) {
+
     // Filtro per ore valide (0-23)
     val validData = activityData.filter { it.hour in 0..23 }
 
@@ -39,13 +39,23 @@ fun CaloriesBurnedChart(activityData: List<ActivityData>) {
             ActivityData(
                 hour = hour,
                 activityType = activities.joinToString(", ") { it.activityType },
-                caloriesBurned = activities.sumOf { it.caloriesBurned.toDouble() }.toFloat()
+                caloriesBurned = activities.fold(0f) { sum, activity -> sum + activity.caloriesBurned }
             )
         }
         .sortedBy { it.hour }
 
+    LaunchedEffect(groupedData) {
+        println("DATI PASSATI al CBD: " + groupedData.toString())
+    }
+
     // Trasforma i dati raggruppati in entry per il grafico
     val entries = groupedData.map { Entry(it.hour.toFloat(), it.caloriesBurned) }
+
+    // Verifica che gli entries non siano vuoti
+    if (entries.isEmpty()) {
+        println("No data to display in the chart.")
+        return
+    }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -58,11 +68,14 @@ fun CaloriesBurnedChart(activityData: List<ActivityData>) {
                         color = Color.RED
                         lineWidth = 2f
                         setCircleColor(Color.RED)
-                        valueTextColor = Color.RED
+                        valueTextColor = Color.BLUE // Cambia il colore dei numeri delle calorie
                         setDrawValues(true) // Mostra i valori sul grafico
                     }
 
                     data = LineData(dataSet)
+
+                    // Forza un refresh del grafico
+                    invalidate()
 
                     description.isEnabled = false
                     axisLeft.axisMinimum = 0f

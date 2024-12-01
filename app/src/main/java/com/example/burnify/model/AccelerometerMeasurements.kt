@@ -100,7 +100,7 @@ class AccelerometerMeasurements : Parcelable {
                 //saveProcessedDataToDatabase(context, processedData)
                 // retrieveProcessedDataFromDatabase(context, "accelerometer")
                 SensorDataManager.accelerometerIsFilled = true
-                SensorDataManager.setAccelerometerMeasurements(this)
+                SensorDataManager.setAccelerometerMeasurements(this,context)
 
                 // Retrieve processed data from the database
 

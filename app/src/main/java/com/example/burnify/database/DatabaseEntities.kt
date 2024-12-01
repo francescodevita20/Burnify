@@ -161,4 +161,11 @@ data class InputModel(
     var label: String? = null
 )
 
+@Entity(tableName = "activity_prediction")
+data class ActivityPrediction(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val processedAt: String,
+    var label: Int? = -1
+)
+
 
