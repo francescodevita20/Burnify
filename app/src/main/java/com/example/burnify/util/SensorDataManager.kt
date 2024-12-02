@@ -1,12 +1,16 @@
 package com.example.burnify.util
 
+import android.app.Application
 import android.content.Context
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.burnify.database.dao.ActivityPredictionDao
 import com.example.burnify.database.ActivityPrediction
 import com.example.burnify.database.AppDatabaseProvider
 import com.example.burnify.model.AccelerometerMeasurements
 import com.example.burnify.model.GyroscopeMeasurements
 import com.example.burnify.model.MagnetometerMeasurements
+import com.example.burnify.viewmodel.AccelerometerViewModel
+import com.example.burnify.viewmodel.LastPredictionViewModel
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import org.json.JSONArray
@@ -23,6 +27,9 @@ object SensorDataManager {
     var accelerometerIsFilled: Boolean = false
     var gyroscopeIsFilled: Boolean = false
     var magnetometerIsFilled: Boolean = false
+    var lastPredictionViewModel: LastPredictionViewModel? = null
+
+
 
     // Tensor to hold the sensor data (500 rows, 9 columns)
     var outputTensor: MutableList<MutableList<Float>> = createZeroMatrix().toMutableList()
@@ -120,7 +127,7 @@ object SensorDataManager {
      * Checks if the output tensor is fully filled with data from all sensors.
      * @return True if all sensor data is filled, false otherwise.
      */
-    fun outputTensorIsFull(): Boolean {
+    private fun outputTensorIsFull(): Boolean {
         return accelerometerIsFilled && gyroscopeIsFilled && magnetometerIsFilled
     }
 
@@ -128,7 +135,7 @@ object SensorDataManager {
      * Creates a zero-initialized matrix of size 500x9.
      * @return A 500x9 matrix filled with zeros.
      */
-    fun createZeroMatrix(): MutableList<MutableList<Float>> {
+    private fun createZeroMatrix(): MutableList<MutableList<Float>> {
         val rows = 500
         val columns = 9
         return MutableList(rows) {
@@ -140,21 +147,16 @@ object SensorDataManager {
      * Sends the sensor data (output tensor) to the server via a POST request.
      * @param context The application context.
      */
-    fun makePostRequestWithSensorData(context: Context) {
-        // Convert the output tensor to JSON format
+    private fun makePostRequestWithSensorData(context: Context) {
         val jsonData = convertOutputTensorToJson()
-
-        // Define the media type for the request body
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val body = RequestBody.create(mediaType, jsonData)
 
-        // Build the POST request
         val request = Request.Builder()
             .url("http://10.0.2.2:8000/predict/")  // Replace with your server's URL
             .post(body)
             .build()
 
-        // Execute the request
         val client = OkHttpClient()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
@@ -167,12 +169,16 @@ object SensorDataManager {
                     if (bodyString != null) {
                         println("HttpRequests: POST request successful. Response: $bodyString")
                         try {
-                            // Parse the response JSON and extract predicted class
                             val jsonObject = JSONObject(bodyString)
                             val predictedClass = jsonObject.getInt("predicted_class")
                             println("Predicted class: $predictedClass")
 
-                            // Insert the prediction into the database asynchronously
+                            // Update the LastPredictionViewModel
+                            lastPredictionViewModel?.updateLastPredictionData(predictedClass)
+                            addPredictionToSharedPreferences(context, predictedClass, "predictions")
+
+
+                            // Insert prediction into the database
                             GlobalScope.launch {
                                 val db = AppDatabaseProvider.getInstance(context)
                                 val dao = db.activityPredictionDao()
@@ -191,12 +197,11 @@ object SensorDataManager {
             }
         })
     }
-
     /**
      * Converts the output tensor into a JSON string.
      * @return The output tensor as a JSON string.
      */
-    fun convertOutputTensorToJson(): String {
+    private fun convertOutputTensorToJson(): String {
         val jsonArray = JSONArray()
 
         for (i in 0 until 500) {
@@ -216,7 +221,7 @@ object SensorDataManager {
     /**
      * Resets the flags that track whether sensor data has been filled.
      */
-    fun resetStateFlags() {
+    private fun resetStateFlags() {
         accelerometerIsFilled = false
         gyroscopeIsFilled = false
         magnetometerIsFilled = false

@@ -14,10 +14,12 @@ import com.example.burnify.App
 import com.example.burnify.service.AccelerometerService
 import com.example.burnify.service.GyroscopeService
 import com.example.burnify.service.MagnetometerService
+import com.example.burnify.util.SensorDataManager
 import com.example.burnify.util.setSharedPreferences
 import com.example.burnify.util.getSharedPreferences
 import com.example.burnify.viewmodel.AccelerometerViewModel
 import com.example.burnify.viewmodel.GyroscopeViewModel
+import com.example.burnify.viewmodel.LastPredictionViewModel
 import com.example.burnify.viewmodel.MagnetometerViewModel
 import com.example.burnify.viewmodel.PredictedActivityViewModel
 
@@ -31,10 +33,11 @@ class MainActivity : ComponentActivity() {
     private val gyroscopeViewModel: GyroscopeViewModel by viewModels()
     private val magnetometerViewModel: MagnetometerViewModel by viewModels()
     private val predictedActivityViewModel: PredictedActivityViewModel by viewModels()
+    private val lastPreictionViewModel: LastPredictionViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        SensorDataManager.lastPredictionViewModel = lastPreictionViewModel
         // Show dialog asking the user to disable battery optimization if necessary
         showBatteryOptimizationDialog()
 
@@ -47,7 +50,8 @@ class MainActivity : ComponentActivity() {
                 accelerometerViewModel = accelerometerViewModel,
                 gyroscopeViewModel = gyroscopeViewModel,
                 magnetometerViewModel = magnetometerViewModel,
-                predictedActivityViewModel = predictedActivityViewModel
+                predictedActivityViewModel = predictedActivityViewModel,
+                lastPredictionViewModel = lastPreictionViewModel
             )
         }
     }
