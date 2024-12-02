@@ -7,7 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.burnify.database.AppDatabaseProvider
 import com.example.burnify.database.ActivityPrediction
-import com.example.burnify.dao.ActivityPredictionDao
+import com.example.burnify.database.dao.ActivityPredictionDao
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

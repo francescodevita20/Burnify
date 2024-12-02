@@ -14,29 +14,34 @@ import com.example.burnify.App
 import com.example.burnify.service.AccelerometerService
 import com.example.burnify.service.GyroscopeService
 import com.example.burnify.service.MagnetometerService
-import com.example.burnify.setSharedPreferences
-import com.example.burnify.getSharedPreferences
+import com.example.burnify.util.setSharedPreferences
+import com.example.burnify.util.getSharedPreferences
 import com.example.burnify.viewmodel.AccelerometerViewModel
 import com.example.burnify.viewmodel.GyroscopeViewModel
 import com.example.burnify.viewmodel.MagnetometerViewModel
 import com.example.burnify.viewmodel.PredictedActivityViewModel
 
+/**
+ * MainActivity is the entry point of the app where sensor services are initialized and the UI is set.
+ */
 class MainActivity : ComponentActivity() {
 
+    // ViewModels for the sensors and predicted activity
     private val accelerometerViewModel: AccelerometerViewModel by viewModels()
     private val gyroscopeViewModel: GyroscopeViewModel by viewModels()
     private val magnetometerViewModel: MagnetometerViewModel by viewModels()
     private val predictedActivityViewModel: PredictedActivityViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Mostra il dialogo che chiede all'utente di disabilitare l'ottimizzazione della batteria
+        // Show dialog asking the user to disable battery optimization if necessary
         showBatteryOptimizationDialog()
 
-        // Avvia i servizi di accelerometro, giroscopio e magnetometro in modalità foreground
+        // Start foreground services for accelerometer, gyroscope, and magnetometer
         startSensorServices()
 
-        // Imposta il contenuto dell'app con i ViewModel
+        // Set the content of the app with the ViewModels
         setContent {
             App(
                 accelerometerViewModel = accelerometerViewModel,
@@ -47,72 +52,76 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Shows a dialog asking the user to disable battery optimization if it's not already disabled.
+     */
     private fun showBatteryOptimizationDialog() {
-        // Verifica se l'app è già esclusa dall'ottimizzazione della batteria
+        // Get the power manager to check battery optimization settings
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         val isIgnoringBatteryOptimizations = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             powerManager.isIgnoringBatteryOptimizations(packageName)
         } else {
-            true // Su versioni precedenti di Android non è necessario fare questa verifica
+            true // No need to check for versions below Android M
         }
 
         if (isIgnoringBatteryOptimizations) {
-            // Se l'app è già esclusa dall'ottimizzazione, non mostrare il dialogo
+            // If the app is already excluded from battery optimization, no need to show the dialog
             return
         }
 
-        // Crea un dialogo che informa l'utente solo se l'ottimizzazione non è stata disabilitata
+        // Create and show an alert dialog to inform the user to disable battery optimization
         val builder = AlertDialog.Builder(this)
-        builder.setTitle("Disabilita Ottimizzazione Batteria")
-            .setMessage("Per permettere all'app di funzionare correttamente in background, devi disabilitare l'ottimizzazione della batteria. Vuoi andare alle impostazioni?")
-            .setPositiveButton("Sì") { _, _ ->
-                // Se l'utente accetta, apri le impostazioni
+        builder.setTitle("Disable Battery Optimization")
+            .setMessage("To ensure the app works properly in the background, you need to disable battery optimization. Do you want to go to settings?")
+            .setPositiveButton("Yes") { _, _ ->
+                // If user accepts, open battery optimization settings
                 val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                 startActivity(intent)
             }
             .setNegativeButton("No") { dialog, _ ->
-                dialog.dismiss() // Chiude il dialogo
+                dialog.dismiss() // Close the dialog if the user declines
             }
-            .setCancelable(false) // Il dialogo non può essere cancellato senza interazione
+            .setCancelable(false) // Make the dialog non-cancelable without interaction
         builder.show()
     }
 
+    /**
+     * Starts foreground services for accelerometer, gyroscope, and magnetometer.
+     */
     private fun startSensorServices() {
-        // Avvia il servizio accelerometro in foreground
+        // Start the accelerometer service in the foreground
         val accelerometerServiceIntent = Intent(this, AccelerometerService::class.java).apply {
-            putExtra("workingmode", (getSharedPreferences(applicationContext,"setting")?.get("workingmode")).toString()) // Passa il valore al servizio
+            putExtra("workingmode", (getSharedPreferences(applicationContext, "setting")?.get("workingmode")).toString()) // Pass working mode to the service
         }
         startForegroundService(accelerometerServiceIntent)
 
-        // Avvia il servizio giroscopio in foreground
+        // Start the gyroscope service in the foreground
         val gyroscopeServiceIntent = Intent(this, GyroscopeService::class.java).apply {
-            putExtra("workingmode", (getSharedPreferences(applicationContext,"setting")?.get("workingmode")).toString()) // Passa il valore al servizio
+            putExtra("workingmode", (getSharedPreferences(applicationContext, "setting")?.get("workingmode")).toString()) // Pass working mode to the service
         }
         startForegroundService(gyroscopeServiceIntent)
 
-        // Avvia il servizio magnetometro in foreground
+        // Start the magnetometer service in the foreground
         val magnetometerServiceIntent = Intent(this, MagnetometerService::class.java).apply {
-            putExtra("workingmode", (getSharedPreferences(applicationContext,"setting")?.get("workingmode")).toString()) // Passa il valore al servizio
+            putExtra("workingmode", (getSharedPreferences(applicationContext, "setting")?.get("workingmode")).toString()) // Pass working mode to the service
         }
         startForegroundService(magnetometerServiceIntent)
     }
 
+    /**
+     * Retrieves settings from SharedPreferences or sets default values if no settings are found.
+     */
     private fun getSettings() {
         val settingsMap = getSharedPreferences(applicationContext, "settings")
 
-        if (settingsMap == null || settingsMap.isEmpty() || settingsMap.containsKey("sampling rate") ) {
+        if (settingsMap == null || settingsMap.isEmpty() || settingsMap.containsKey("sampling rate")) {
+            // If no settings found or sampling rate is missing, set default values
             val defaultMap = mapOf("sampling rate" to 0.5)
             setSharedPreferences(applicationContext, defaultMap, "settings")
-            println("Impostazioni non trovate, valore predefinito impostato.")
-            // Usa il valore predefinito
+            println("Settings not found, default value set.")
         } else {
-            println("Impostazioni recuperate con successo. + ${settingsMap["sampling rate"]}")
-
-            // Usa le impostazioni recuperate
+            // If settings are found, log and use the retrieved settings
+            println("Settings retrieved successfully. Sampling rate: ${settingsMap["sampling rate"]}")
         }
     }
-
-
 }
-
-

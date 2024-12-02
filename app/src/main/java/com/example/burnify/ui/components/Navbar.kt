@@ -15,35 +15,44 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+/**
+ * Navbar Composable function that renders a row of navigation icons for different pages.
+ *
+ * @param onPageSelected A callback function that is triggered when a navigation icon is clicked.
+ */
 @Composable
 fun Navbar(onPageSelected: (String) -> Unit) {
+    // Row layout for the navigation bar, with spacing between icons
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),  // Maggiore padding per layout smartphone
-        horizontalArrangement = Arrangement.SpaceAround // Adatta la spaziatura ai dispositivi più grandi
+            .fillMaxWidth() // Makes the row span the entire width of the screen
+            .padding(8.dp), // Adds padding for better layout on smartphone screens
+        horizontalArrangement = Arrangement.SpaceAround // Distributes icons evenly across the row
     ) {
+        // Icon for the "Today" page
         IconButton(onClick = { onPageSelected("Today") }) {
             Icon(
-                imageVector = Icons.Default.Today,
-                contentDescription = "Today",
-                tint = Color.Black // Cambia colore per un layout smartphone, a seconda del tema
+                imageVector = Icons.Default.Today, // The icon representing "Today"
+                contentDescription = "Today", // Description for accessibility
+                tint = Color.Black // Sets the icon color to black (adjust based on theme)
             )
         }
-        IconButton(onClick = {
-            onPageSelected("Data") // Funzione per navigare o gestire i dati
-        }) {
+
+        // Icon for the "Data" page
+        IconButton(onClick = { onPageSelected("Data") }) {
             Icon(
-                imageVector = Icons.Default.DateRange,
-                contentDescription = "Data",
-                tint = Color.Black
+                imageVector = Icons.Default.DateRange, // The icon representing "Data"
+                contentDescription = "Data", // Description for accessibility
+                tint = Color.Black // Sets the icon color to black (adjust based on theme)
             )
         }
+
+        // Icon for the "Settings" page
         IconButton(onClick = { onPageSelected("Settings") }) {
             Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
-                tint = Color.Black
+                imageVector = Icons.Default.Settings, // The icon representing "Settings"
+                contentDescription = "Settings", // Description for accessibility
+                tint = Color.Black // Sets the icon color to black (adjust based on theme)
             )
         }
     }

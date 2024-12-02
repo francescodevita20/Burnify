@@ -6,25 +6,37 @@ import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.sqrt
 import kotlin.math.abs
-import kotlin.math.log10
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import org.apache.commons.math3.transform.FastFourierTransformer
 import org.apache.commons.math3.transform.DftNormalization
 import org.apache.commons.math3.transform.TransformType
 
+/**
+ * This class processes accelerometer measurement data and calculates various statistical and spectral features.
+ */
 class AccelerometerDataProcessor {
 
+    /**
+     * Converts the accelerometer measurements into a processed sample entity.
+     * It calculates various statistical features (mean, standard deviation, percentiles, etc.)
+     * and spectral features (log energy, entropy, etc.) from the given measurements.
+     */
     fun processMeasurementsToEntity(measurements: AccelerometerMeasurements): AccelerometerProcessedSample {
         val samples = measurements.getSamples()
-        val xValues = samples.map { it.get(0)}
-        val yValues = samples.map { it.get(1) }
-        val zValues = samples.map { it.get(2) }
-        val magnitudes = samples.map { sqrt(it.get(0).pow(2) + it.get(1).pow(2) + it.get(2).pow(2)) }
+        val xValues = samples.map { it.get(0) }  // X-axis values
+        val yValues = samples.map { it.get(1) }  // Y-axis values
+        val zValues = samples.map { it.get(2) }  // Z-axis values
+        val magnitudes = samples.map { sqrt(it.get(0).pow(2) + it.get(1).pow(2) + it.get(2).pow(2)) }  // Magnitude of the vector
 
+        // Get the current date and time in a specific format
         val currentDateTime = LocalDateTime.now()
         val formattedDateTime = currentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+
+        // Calculate the spectral log energy bands (frequency domain features)
         val spectralLogEnergyBands = calculateSpectralLogEnergyBands(magnitudes)
+
+        // Return the processed sample with calculated features
         return AccelerometerProcessedSample(
             processedAt = formattedDateTime,
             meanX = calculateMean(xValues),
@@ -58,20 +70,24 @@ class AccelerometerDataProcessor {
         )
     }
 
+    // Calculate the mean of a list of values
     private fun calculateMean(values: List<Float>): Float {
         return values.sum() / values.size
     }
 
+    // Calculate the standard deviation of a list of values
     private fun calculateStandardDeviation(values: List<Float>): Float {
         val mean = calculateMean(values)
         return sqrt(values.sumOf { (it - mean).pow(2).toDouble() }.toFloat() / values.size)
     }
 
+    // Calculate the nth moment (3rd, 4th, etc.) of a list of values
     private fun calculateMoment(values: List<Float>, order: Int): Float {
         val mean = calculateMean(values)
         return values.sumOf { (it - mean).pow(order).toDouble() }.toFloat() / values.size
     }
 
+    // Calculate the 25th, 50th, and 75th percentiles of a list of values
     private fun calculatePercentiles(values: List<Float>): Map<String, Float> {
         val sorted = values.sorted()
         val n = values.size
@@ -82,6 +98,7 @@ class AccelerometerDataProcessor {
         )
     }
 
+    // Calculate the entropy of a list of values
     private fun calculateEntropy(values: List<Float>, bins: Int): Float {
         val min = values.minOrNull() ?: return 0f
         val max = values.maxOrNull() ?: return 0f
@@ -98,23 +115,26 @@ class AccelerometerDataProcessor {
         val total = values.size.toFloat()
         val probabilities = binCounts.map { it / total }
 
-        // Calculate entropy
+        // Calculate entropy using the Shannon entropy formula
         return -probabilities.filter { it > 0 }
             .sumOf { p -> p * ln(p.toDouble()) }.toFloat()
     }
 
+    // Calculate the log energy and spectral entropy characteristics of a list of values
     private fun calculateSpectralCharacteristics(values: List<Float>): Map<String, Float> {
         val logEnergy = values.sumOf { it.pow(2).toDouble() }.let { ln(it) }.toFloat()
         val spectralEntropy = calculateEntropy(values, 8)
         return mapOf("LogEnergy" to logEnergy, "SpectralEntropy" to spectralEntropy)
     }
 
+    // Calculate the autocorrelation of a list of values for a given lag
     private fun calculateAutocorrelation(values: List<Float>, lag: Int = 1): Float {
         val n = values.size
         val mean = calculateMean(values)
         return (0 until n - lag).sumOf { ((values[it] - mean) * (values[it + lag] - mean)).toDouble() }.toFloat() / (n - lag)
     }
 
+    // Calculate the correlation between two lists of values
     private fun calculateCorrelation(values1: List<Float>, values2: List<Float>): Float {
         val mean1 = calculateMean(values1)
         val mean2 = calculateMean(values2)
@@ -124,22 +144,27 @@ class AccelerometerDataProcessor {
             .toFloat() / (stdDev1 * stdDev2 * values1.size)
     }
 
+    /**
+     * Calculates spectral log energy bands using Fast Fourier Transform (FFT).
+     * It calculates the energy in five specific frequency bands: 0-0.5Hz, 0.5-1Hz, 1-3Hz, 3-5Hz, >5Hz.
+     */
     private fun calculateSpectralLogEnergyBands(values: List<Float>): Map<String, Float> {
-        // Converti la lista Float in un DoubleArray
+        // Convert Float list to DoubleArray for FFT processing
         val doubleValues = values.map { it.toDouble() }.toDoubleArray()
-        val fft = FastFourierTransformer(DftNormalization.STANDARD) // Usa Apache Commons Math
+        val fft = FastFourierTransformer(DftNormalization.STANDARD)  // Using Apache Commons Math for FFT
 
-        // Esegui la FFT
+        // Perform FFT on the data
         val fftResult = fft.transform(doubleValues, TransformType.FORWARD)
 
-        // Calcola le energie nelle bande
+        // Calculate energy in predefined frequency bands
         val bandEnergies = DoubleArray(5) { 0.0 }
-        val samplingRate = 50.0 // Frequenza di campionamento
+        val samplingRate = 50.0  // Assumed sampling rate of 50Hz
         val frequencies = (0 until fftResult.size / 2).map { it * (samplingRate / fftResult.size) }
 
+        // Accumulate energies in respective bands based on frequency ranges
         for (i in frequencies.indices) {
             val freq = frequencies[i]
-            val magnitude = fftResult[i].abs() // Magnitudine (modulo)
+            val magnitude = fftResult[i].abs()  // Magnitude (absolute value)
             when {
                 freq <= 0.5 -> bandEnergies[0] += magnitude.pow(2)
                 freq <= 1.0 -> bandEnergies[1] += magnitude.pow(2)
@@ -158,10 +183,9 @@ class AccelerometerDataProcessor {
         )
     }
 
-
-    // Funzione che calcola la Time Entropy
+    // Calculate time entropy for normalized values (optional additional feature)
     private fun calculateTimeEntropy(values: List<Float>): Float {
         val normalizedValues = values.map { (it - calculateMean(values)) / calculateStandardDeviation(values) }
-        return calculateEntropy(normalizedValues, 8) // Usa 8 bin per l'entropia
+        return calculateEntropy(normalizedValues, 8)  // Use 8 bins for entropy calculation
     }
 }
