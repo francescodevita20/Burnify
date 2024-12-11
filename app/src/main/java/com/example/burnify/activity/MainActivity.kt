@@ -11,9 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import com.example.burnify.App
-import com.example.burnify.service.AccelerometerService
-import com.example.burnify.service.GyroscopeService
-import com.example.burnify.service.MagnetometerService
+import com.example.burnify.service.UnifiedSensorService
 import com.example.burnify.util.SensorDataManager
 import com.example.burnify.util.setSharedPreferences
 import com.example.burnify.util.getSharedPreferences
@@ -24,7 +22,7 @@ import com.example.burnify.viewmodel.MagnetometerViewModel
 import com.example.burnify.viewmodel.PredictedActivityViewModel
 
 /**
- * MainActivity is the entry point of the app where sensor services are initialized and the UI is set.
+ * MainActivity is the entry point of the app where the unified sensor service is initialized and the UI is set.
  */
 class MainActivity : ComponentActivity() {
 
@@ -33,16 +31,17 @@ class MainActivity : ComponentActivity() {
     private val gyroscopeViewModel: GyroscopeViewModel by viewModels()
     private val magnetometerViewModel: MagnetometerViewModel by viewModels()
     private val predictedActivityViewModel: PredictedActivityViewModel by viewModels()
-    private val lastPreictionViewModel: LastPredictionViewModel by viewModels()
+    private val lastPredictionViewModel: LastPredictionViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        SensorDataManager.lastPredictionViewModel = lastPreictionViewModel
+        SensorDataManager.lastPredictionViewModel = lastPredictionViewModel
+
         // Show dialog asking the user to disable battery optimization if necessary
         showBatteryOptimizationDialog()
 
-        // Start foreground services for accelerometer, gyroscope, and magnetometer
-        startSensorServices()
+        // Start the unified sensor service
+        startUnifiedSensorService()
 
         // Set the content of the app with the ViewModels
         setContent {
@@ -51,7 +50,7 @@ class MainActivity : ComponentActivity() {
                 gyroscopeViewModel = gyroscopeViewModel,
                 magnetometerViewModel = magnetometerViewModel,
                 predictedActivityViewModel = predictedActivityViewModel,
-                lastPredictionViewModel = lastPreictionViewModel
+                lastPredictionViewModel = lastPredictionViewModel
             )
         }
     }
@@ -90,26 +89,17 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Starts foreground services for accelerometer, gyroscope, and magnetometer.
+     * Starts the unified sensor service in the foreground.
      */
-    private fun startSensorServices() {
-        // Start the accelerometer service in the foreground
-        val accelerometerServiceIntent = Intent(this, AccelerometerService::class.java).apply {
-            putExtra("workingmode", (getSharedPreferences(applicationContext, "setting")?.get("workingmode")).toString()) // Pass working mode to the service
+    private fun startUnifiedSensorService() {
+        // Start the unified sensor service with necessary parameters
+        val unifiedServiceIntent = Intent(this, UnifiedSensorService::class.java).apply {
+            putExtra(
+                "workingmode",
+                getSharedPreferences(applicationContext, "setting")?.get("workingmode").toString()
+            ) // Pass working mode to the service
         }
-        startForegroundService(accelerometerServiceIntent)
-
-        // Start the gyroscope service in the foreground
-        val gyroscopeServiceIntent = Intent(this, GyroscopeService::class.java).apply {
-            putExtra("workingmode", (getSharedPreferences(applicationContext, "setting")?.get("workingmode")).toString()) // Pass working mode to the service
-        }
-        startForegroundService(gyroscopeServiceIntent)
-
-        // Start the magnetometer service in the foreground
-        val magnetometerServiceIntent = Intent(this, MagnetometerService::class.java).apply {
-            putExtra("workingmode", (getSharedPreferences(applicationContext, "setting")?.get("workingmode")).toString()) // Pass working mode to the service
-        }
-        startForegroundService(magnetometerServiceIntent)
+        startForegroundService(unifiedServiceIntent)
     }
 
     /**
@@ -118,7 +108,7 @@ class MainActivity : ComponentActivity() {
     private fun getSettings() {
         val settingsMap = getSharedPreferences(applicationContext, "settings")
 
-        if (settingsMap == null || settingsMap.isEmpty() || settingsMap.containsKey("sampling rate")) {
+        if (settingsMap == null || settingsMap.isEmpty() || !settingsMap.containsKey("sampling rate")) {
             // If no settings found or sampling rate is missing, set default values
             val defaultMap = mapOf("sampling rate" to 0.5)
             setSharedPreferences(applicationContext, defaultMap, "settings")
