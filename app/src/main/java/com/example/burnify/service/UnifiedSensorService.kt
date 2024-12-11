@@ -89,7 +89,7 @@ class UnifiedSensorService : Service(), SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         event?.let {
-            //Log.d("SensorData", "Sensor type: ${it.sensor.type}, Values: ${it.values.joinToString()}")
+            Log.d("SensorData", "Sensor type: ${it.sensor.type}, Values: ${it.values.joinToString()}")
             when (it.sensor.type) {
                 Sensor.TYPE_ACCELEROMETER -> handleAccelerometerData(it)
                 Sensor.TYPE_GYROSCOPE -> handleGyroscopeData(it)
