@@ -38,7 +38,7 @@ class AccelerometerDataProcessor {
 
         // Return the processed sample with calculated features
         return AccelerometerProcessedSample(
-            processedAt = formattedDateTime,
+            processedAt = formattedDateTime,        //timestamp
             meanX = calculateMean(xValues),
             meanY = calculateMean(yValues),
             meanZ = calculateMean(zValues),

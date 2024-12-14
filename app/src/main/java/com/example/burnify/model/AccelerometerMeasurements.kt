@@ -165,7 +165,7 @@ class AccelerometerMeasurements : Parcelable {
         samples.clear()
         samplesCount = 0
     }
-
+      // parcelable allow it to be passed between Android components
     companion object CREATOR : Parcelable.Creator<AccelerometerMeasurements> {
         // Creates an instance of AccelerometerMeasurements from a Parcel.
         override fun createFromParcel(parcel: Parcel): AccelerometerMeasurements {

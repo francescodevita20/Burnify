@@ -53,6 +53,12 @@ class AccelerometerService : Service(), SensorEventListener {
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
+        if (accelerometer == null) {
+            println("Error: No Accelerometer found on device")
+            stopSelf() // Stop service if no accelerometer is available
+            return
+        }
+
         // Initialize the ViewModel to manage data updates
         viewModel = ViewModelProvider.AndroidViewModelFactory(application).create(AccelerometerViewModel::class.java)
 

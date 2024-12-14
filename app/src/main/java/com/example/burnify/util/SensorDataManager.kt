@@ -43,8 +43,8 @@ object SensorDataManager {
         val samples = accelerometerMeasurements.getSamples()
 
         // If there are enough samples (500), fill the tensor with data
-        if (samples.size >= 500) {
-            for (i in 0 until 500) {
+        if (samples.size >= 200) {
+            for (i in 0 until 200) {
                 outputTensor[i][0] = samples[i][0] // X-axis
                 outputTensor[i][1] = samples[i][1] // Y-axis
                 outputTensor[i][2] = samples[i][2] // Z-axis
@@ -72,8 +72,8 @@ object SensorDataManager {
         val samples = gyroscopeMeasurements.getSamples()
 
         // If there are enough samples (500), fill the tensor with data
-        if (samples.size >= 500) {
-            for (i in 0 until 500) {
+        if (samples.size >= 200) {
+            for (i in 0 until 200) {
                 outputTensor[i][3] = samples[i][0] // X-axis
                 outputTensor[i][4] = samples[i][1] // Y-axis
                 outputTensor[i][5] = samples[i][2] // Z-axis
@@ -102,8 +102,8 @@ object SensorDataManager {
         val samples = magnetometerMeasurements.getSamples()
 
         // If there are enough samples (500), fill the tensor with data
-        if (samples.size >= 500) {
-            for (i in 0 until 500) {
+        if (samples.size >= 200) {
+            for (i in 0 until 200) {
                 outputTensor[i][6] = samples[i][0] // X-axis
                 outputTensor[i][7] = samples[i][1] // Y-axis
                 outputTensor[i][8] = samples[i][2] // Z-axis
@@ -204,7 +204,7 @@ object SensorDataManager {
     private fun convertOutputTensorToJson(): String {
         val jsonArray = JSONArray()
 
-        for (i in 0 until 500) {
+        for (i in 0 until 200) {
             val row = JSONArray()
             for (j in 0 until 9) {
                 row.put(outputTensor[i][j])

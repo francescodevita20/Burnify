@@ -29,6 +29,7 @@ import com.example.burnify.viewmodel.PredictedActivityViewModel
 class MainActivity : ComponentActivity() {
 
     // ViewModels for the sensors and predicted activity
+    // ViewModels handle data binding and communication between the UI and the backend
     private val accelerometerViewModel: AccelerometerViewModel by viewModels()
     private val gyroscopeViewModel: GyroscopeViewModel by viewModels()
     private val magnetometerViewModel: MagnetometerViewModel by viewModels()
