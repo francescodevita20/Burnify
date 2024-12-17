@@ -6,7 +6,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import org.json.JSONArray
 
-fun setSharedPreferences(context: Context, newMap: Map<String, Any>, sharedPreferencesName: String) {
+fun setSharedPreferences(context: Context, newMap: Map<String, Any>, sharedPreferencesName: String, dataKey: String) {
     try {
         val sharedPreferences = context.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
@@ -14,45 +14,40 @@ fun setSharedPreferences(context: Context, newMap: Map<String, Any>, sharedPrefe
         val gson = GsonBuilder().serializeSpecialFloatingPointValues().create()
         val updatedJson = gson.toJson(newMap)
 
-        editor.putString(sharedPreferencesName, updatedJson)
+        // Save the map under a specific key within the preferences file
+        editor.putString(dataKey, updatedJson)
         editor.apply()
 
-        println("Map saved successfully in SharedPreferences.")
+        // Log the data being saved for debugging
+        println("Saving data to SharedPreferences ($sharedPreferencesName): $updatedJson")
     } catch (e: Exception) {
         println("Error saving map: ${e.message}")
     }
 }
 
-fun getSharedPreferences(context: Context, sharedPreferencesName: String): Map<String, Any> {
-    val defaultData = mapOf(
-        "weight" to 70,  // Default weight
-        "height" to 165, // Default height
-        "age" to 25      // Default age
-    )
-
+fun getSharedPreferences(context: Context, sharedPreferencesName: String, dataKey: String): Map<String, Any>? {
     return try {
         val sharedPreferences = context.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE)
-        val json = sharedPreferences.getString(sharedPreferencesName, null)
+        val json = sharedPreferences.getString(dataKey, null) // Retrieve data using the specific key
 
         if (json.isNullOrEmpty()) {
-            println("No data found in SharedPreferences. Returning default data.")
-            defaultData
+            // No data found, returning null instead of default values
+            println("No data found in SharedPreferences for key: $dataKey in $sharedPreferencesName.")
+            null
         } else {
             val gson = Gson()
             val type = object : TypeToken<Map<String, Any>>() {}.type
             val map: Map<String, Any> = gson.fromJson(json, type)
-            println("SharedPreferences retrieved successfully.")
 
-            // Merge default data with retrieved data (retrieved values overwrite defaults)
-            defaultData + map
+            // Log the data retrieved for debugging
+            println("Retrieved data from SharedPreferences ($sharedPreferencesName): $map")
+            map
         }
     } catch (e: Exception) {
-        println("Error retrieving data: ${e.message}. Returning default data.")
-        defaultData // Return only default data in case of error
+        println("Error retrieving data: ${e.message}. Returning null.")
+        null
     }
 }
-
-
 
 fun clearSharedPreferences(context: Context, sharedPreferencesName: String) {
     try {

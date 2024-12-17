@@ -21,7 +21,9 @@ fun TodayScreen(context: Context, viewModel: PredictedActivityViewModel) {
     var classes by remember { mutableStateOf<List<String>>(emptyList()) }
     var caloriesData by remember { mutableStateOf<List<ActivityData>>(emptyList()) }
 
-    val weight = (getSharedPreferences(context, "userdata")?.get("weight")).toString().toInt()
+    // Safely retrieve and convert weight
+    val weightString = (getSharedPreferences(context, "userdata", "user_data_key")?.get("weight")).toString()
+    val weight = weightString.toFloatOrNull()?.toInt() ?: 70  // Default to 70 if conversion fails
 
     val predictedActivityData by viewModel.predictedActivityData.observeAsState()
 
