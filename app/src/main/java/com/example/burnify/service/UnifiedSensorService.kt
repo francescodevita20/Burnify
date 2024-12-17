@@ -13,6 +13,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.burnify.util.SensorDataManager
 import com.example.burnify.util.NotificationHelper.Companion.CHANNEL_ID
+import com.example.burnify.util.getSharedPreferences
 
 class UnifiedSensorService : Service(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
@@ -51,32 +52,33 @@ class UnifiedSensorService : Service(), SensorEventListener {
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         magnetometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
 
+        // Retrieve working mode from SharedPreferences
+        val workingMode = getSharedPreferences(applicationContext, "settings", "settings_key")?.get("workingmode") as? String
+        val samplingDelay = if (workingMode == "maxbatterysaving") {
+            800_000 // 800 milliseconds in microseconds
+        } else {
+            SensorManager.SENSOR_DELAY_UI // Default UI delay
+        }
+
+        // Log the selected delay
+        Log.d("SensorService", "Working mode: $workingMode, Sampling delay: $samplingDelay")
+
         if (accelerometerSensor == null) {
             Log.e("SensorService", "Accelerometer not available")
         } else {
-            Log.d("SensorService", "Accelerometer available")
+            sensorManager.registerListener(this, accelerometerSensor, samplingDelay)
         }
 
         if (gyroscopeSensor == null) {
             Log.e("SensorService", "Gyroscope not available")
         } else {
-            Log.d("SensorService", "Gyroscope available")
+            sensorManager.registerListener(this, gyroscopeSensor, samplingDelay)
         }
 
         if (magnetometerSensor == null) {
             Log.e("SensorService", "Magnetometer not available")
         } else {
-            Log.d("SensorService", "Magnetometer available")
-        }
-
-        accelerometerSensor?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
-        }
-        gyroscopeSensor?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
-        }
-        magnetometerSensor?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
+            sensorManager.registerListener(this, magnetometerSensor, samplingDelay)
         }
     }
 

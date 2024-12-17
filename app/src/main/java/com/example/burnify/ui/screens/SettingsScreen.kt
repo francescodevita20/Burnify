@@ -113,7 +113,7 @@ fun SettingsScreen(context: Context) {
                                     context,
                                     mapOf("workingmode" to selectedMode),
                                     "settings",
-                                    "settiings_key"
+                                    "settings_key"
                                 )
                             }
                         )

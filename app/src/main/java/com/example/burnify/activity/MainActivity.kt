@@ -79,7 +79,7 @@ class MainActivity : ComponentActivity() {
         Log.d("MainActivity", "Starting UnifiedSensorService")
 
         // Retrieve the working mode and pass it to the service
-        val workingMode = getSharedPreferences(applicationContext, "workingmode", "working_mode_key")?.get("workingmode")
+        val workingMode = getSharedPreferences(applicationContext, "settings", "settings_key")?.get("workingmode")
 
         val unifiedServiceIntent = Intent(this, UnifiedSensorService::class.java).apply {
             putExtra("workingmode", workingMode.toString())
