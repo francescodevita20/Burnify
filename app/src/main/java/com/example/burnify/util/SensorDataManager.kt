@@ -24,7 +24,7 @@ object SensorDataManager {
     private val gyroscopeData: MutableList<List<Float>> = mutableListOf() // List for gyroscope data
     private val magnetometerData: MutableList<List<Float>> = mutableListOf() // List for magnetometer data
 
-    private const val requiredDataPoints = 500 // Number of data points to collect
+    private const val requiredDataPoints = 200 // Number of data points to collect
 
     /**
      * Updates the accelerometer data (called when new accelerometer data arrives).
