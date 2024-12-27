@@ -1,6 +1,5 @@
 package com.example.burnify.service
 
-import android.app.Notification
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -10,13 +9,12 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.NotificationCompat
 import com.example.burnify.util.SensorDataManager
-import com.example.burnify.util.NotificationHelper.Companion.CHANNEL_ID
-import com.example.burnify.util.getSharedPreferences
+import com.example.burnify.util.NotificationHelper
 
 class UnifiedSensorService : Service(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
+    private lateinit var notificationHelper: NotificationHelper
 
     // Sensor references
     private var accelerometerSensor: Sensor? = null
@@ -26,18 +24,13 @@ class UnifiedSensorService : Service(), SensorEventListener {
     override fun onCreate() {
         super.onCreate()
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        notificationHelper = NotificationHelper(this) // Initialize NotificationHelper
         initializeSensors()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Create a simple notification for the foreground service
-        val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Sensor Data Collection")
-            .setContentText("Collecting data from sensors...")
-            .setSmallIcon(android.R.drawable.ic_notification_overlay) // Use a custom icon here
-            .build()
-
-        // Start the service as a foreground service
+        // Use NotificationHelper to create and start the foreground notification
+        val notification = notificationHelper.createServiceNotification("Unified Sensor Service")
         startForeground(1, notification)
 
         // Return START_STICKY to ensure the service is restarted if it's killed by the system
@@ -53,7 +46,11 @@ class UnifiedSensorService : Service(), SensorEventListener {
         magnetometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
 
         // Retrieve working mode from SharedPreferences
-        val workingMode = getSharedPreferences(applicationContext, "settings", "settings_key")?.get("workingmode") as? String
+        val workingMode = com.example.burnify.util.getSharedPreferences(
+            applicationContext,
+            "settings",
+            "settings_key"
+        )?.get("workingmode") as? String
         val samplingDelay = if (workingMode == "maxbatterysaving") {
             800_000 // 800 milliseconds in microseconds
         } else {

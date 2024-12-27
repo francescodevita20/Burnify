@@ -81,10 +81,19 @@ class MainActivity : ComponentActivity() {
         // Retrieve the working mode and pass it to the service
         val workingMode = getSharedPreferences(applicationContext, "settings", "settings_key")?.get("workingmode")
 
-        val unifiedServiceIntent = Intent(this, UnifiedSensorService::class.java).apply {
-            putExtra("workingmode", workingMode.toString())
+        if (workingMode == null) {
+            Log.w("MainActivity", "Working mode is not set. Defaulting to 'maxaccuracy'")
         }
-        startForegroundService(unifiedServiceIntent)
+
+        val unifiedServiceIntent = Intent(this, UnifiedSensorService::class.java).apply {
+            putExtra("workingmode", workingMode?.toString() ?: "maxaccuracy") // Default to "maxaccuracy" if null
+        }
+        try {
+            startForegroundService(unifiedServiceIntent)
+            Log.d("MainActivity", "UnifiedSensorService started successfully")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to start UnifiedSensorService", e)
+        }
     }
 
     /**
