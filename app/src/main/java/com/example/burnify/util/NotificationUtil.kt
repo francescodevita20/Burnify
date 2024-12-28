@@ -5,6 +5,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import androidx.core.app.NotificationCompat
+import com.example.burnify.R
 
 class NotificationHelper(private val context: Context) {
 
@@ -21,35 +23,43 @@ class NotificationHelper(private val context: Context) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Burnify Services",
-                NotificationManager.IMPORTANCE_LOW
-            )
+                NotificationManager.IMPORTANCE_DEFAULT // Changed from LOW to DEFAULT
+            ).apply {
+                description = "Notifications for Burnify's active services"
+            }
             notificationManager.createNotificationChannel(channel)
+            android.util.Log.d("NotificationHelper", "NotificationChannel $CHANNEL_ID created")
         }
     }
 
     fun createGroupNotification(): Notification {
-        return Notification.Builder(context, CHANNEL_ID)
+        return NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle("Active Services")
             .setContentText("You have active services running.")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification) // Replace with custom icon if available
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT) // Ensure visibility
             .setGroup(GROUP_KEY)
             .setGroupSummary(true)
             .build()
     }
 
     fun createServiceNotification(serviceName: String): Notification {
-        return Notification.Builder(context, CHANNEL_ID)
+        return NotificationCompat.Builder(context, CHANNEL_ID) // Use NotificationCompat.Builder
             .setContentTitle("$serviceName is running")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentText("This service is active.") // Add content text
+            .setSmallIcon(R.drawable.ic_notification) // Replace with custom icon if available
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT) // Ensure visibility
             .setGroup(GROUP_KEY)
             .build()
     }
 
     fun notify(notificationId: Int, notification: Notification) {
+        android.util.Log.d("NotificationHelper", "Notifying with ID $notificationId")
         notificationManager.notify(notificationId, notification)
     }
 
     fun cancel(notificationId: Int) {
+        android.util.Log.d("NotificationHelper", "Canceling notification with ID $notificationId")
         notificationManager.cancel(notificationId)
     }
 }

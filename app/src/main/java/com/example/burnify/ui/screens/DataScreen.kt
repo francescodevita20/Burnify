@@ -1,9 +1,5 @@
 package com.example.burnify.ui.screens
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
@@ -15,9 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.burnify.model.AccelerometerMeasurements
-import com.example.burnify.model.GyroscopeMeasurements
-import com.example.burnify.model.MagnetometerMeasurements
 import com.example.burnify.util.getLastPredictionsFromSharedPreferences
 import com.example.burnify.viewmodel.AccelerometerViewModel
 import com.example.burnify.viewmodel.GyroscopeViewModel

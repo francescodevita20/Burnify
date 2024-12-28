@@ -27,23 +27,37 @@ fun SettingsScreen(context: Context) {
     val genders = listOf("Male", "Female")
 
     LaunchedEffect(Unit) {
-        val savedSettings = getSharedPreferences(context, "setting")
+        // Load settings from SharedPreferences
+        val savedSettings = getSharedPreferences(context, "settings", "settings_key")
         val savedMode = savedSettings?.get("workingmode") as? String
+
         if (savedMode != null) {
+            // If 'workingmode' exists, display the saved mode
             selectedMode = savedMode
+        } else {
+            // If 'workingmode' is missing, save the default "maxaccuracy"
+            setSharedPreferences(
+                context,
+                mapOf("workingmode" to "maxaccuracy"),
+                "settings",
+                "settings_key"
+            )
+            selectedMode = "maxaccuracy" // Update the UI to show the default mode
         }
 
-        val savedUserData = getSharedPreferences(context, "userdata") ?: emptyMap()
-        weight = savedUserData["weight"] as? String ?: ""
-        height = savedUserData["height"] as? String ?: ""
-        age = savedUserData["age"] as? String ?: ""
+        // Load user data for weight, height, age, and gender
+        val savedUserData = getSharedPreferences(context, "userdata", "user_data_key") ?: emptyMap()
+        weight = savedUserData["weight"]?.toString() ?: ""
+        height = savedUserData["height"]?.toString() ?: ""
+        age = savedUserData["age"]?.toString() ?: ""
         gender = savedUserData["gender"] as? String ?: "Male"
     }
 
     fun updateUserData(key: String, value: String) {
-        val currentData = getSharedPreferences(context, "userdata")?.toMutableMap() ?: mutableMapOf()
+        val currentData = getSharedPreferences(context, "userdata", "user_data_key")?.toMutableMap() ?: mutableMapOf()
         currentData[key] = value
-        setSharedPreferences(context, currentData, "userdata")
+        setSharedPreferences(context, currentData, "userdata", "user_data_key")
+        println("Updated user data for $key: $value") // Added log
     }
 
     Column(
@@ -52,15 +66,16 @@ fun SettingsScreen(context: Context) {
             .background(Color.White) // Imposta sfondo bianco
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {        Text(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 16.dp),
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.primary,
-        text = "Settings",
-        style = MaterialTheme.typography.titleLarge
-    )
+    ) {
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.primary,
+            text = "Settings",
+            style = MaterialTheme.typography.titleLarge
+        )
         // Card per la selezione della modalità
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -84,7 +99,8 @@ fun SettingsScreen(context: Context) {
                                 setSharedPreferences(
                                     context,
                                     mapOf("workingmode" to selectedMode),
-                                    "setting"
+                                    "settings",
+                                    "settings_key"
                                 )
                             },
                         verticalAlignment = Alignment.CenterVertically
@@ -96,7 +112,8 @@ fun SettingsScreen(context: Context) {
                                 setSharedPreferences(
                                     context,
                                     mapOf("workingmode" to selectedMode),
-                                    "setting"
+                                    "settings",
+                                    "settings_key"
                                 )
                             }
                         )

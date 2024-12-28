@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <uses-permission android:name="android.permission.BODY_SENSORS" />   <!-- access sensor data-->
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
-    <uses-permission android:name="android.permission.FOREGROUND_ACTIVITY_RECOGNITION" /> <!--use APIs for activity recognition-->
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" /> <!--restart services after a device reboot-->
+    <uses-permission android:name="android.permission.FOREGROUND_ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />  <!--monitoring network status-->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
 
 
@@ -35,21 +37,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".activity.OnboardingActivity" />
 
         <service
-            android:name=".service.AccelerometerService"
-            android:foregroundServiceType="health"
-            android:exported="true" />
+            android:name=".service.UnifiedSensorService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="health">
+        </service>
 
-        <service
-            android:name=".service.GyroscopeService"
-            android:foregroundServiceType="health"
-            android:exported="true" />
 
-        <service
-            android:name=".service.MagnetometerService"
-            android:foregroundServiceType="health"
-            android:exported="true" />
 
         <receiver android:name=".service.BootReceiver"
             android:exported="false">
