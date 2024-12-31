@@ -125,8 +125,10 @@ object SensorDataManager {
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val body = RequestBody.create(mediaType, jsonData)
 
+        println("BODYYY: $jsonData")
+
         val request = Request.Builder()
-            .url("https://031e-2a05-d014-175c-b600-2d44-16ea-1c47-12ca.ngrok-free.app/predict/")  // Replace with your server's URL
+            .url("https://3e64-2a05-d014-175c-b600-2d44-16ea-1c47-12ca.ngrok-free.app/predict/")  // Replace with your server's URL
             .post(body)
             .build()
 
