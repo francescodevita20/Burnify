@@ -1,5 +1,4 @@
 package com.example.burnify.activity
-
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
