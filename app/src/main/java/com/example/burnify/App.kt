@@ -2,21 +2,14 @@ package com.example.burnify
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Today
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import com.example.burnify.ui.components.Navbar
-import com.example.burnify.ui.screens.ScreenContent
+import com.example.burnify.ui.screens1.ScreenContent
 import com.example.burnify.ui.theme.BurnifyTheme
 import com.example.burnify.viewmodel.AccelerometerViewModel
 import com.example.burnify.viewmodel.GyroscopeViewModel

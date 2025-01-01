@@ -1,4 +1,4 @@
-package com.example.burnify.ui.screens
+package com.example.burnify.ui.screens1
 
 import SettingsScreen
 import TodayScreen

@@ -1,4 +1,4 @@
-package com.example.burnify.ui.screens
+package com.example.burnify.ui.screens1
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme

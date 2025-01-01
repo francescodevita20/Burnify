@@ -12,6 +12,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.burnify.processor.CaloriesDataProcessor
+import com.example.burnify.ui.components.ActivityData
+import com.example.burnify.ui.components.CaloriesBurnedChart
 import com.example.burnify.ui.components.HistogramActivityChart
 import com.example.burnify.util.getSharedPreferences
 import com.example.burnify.viewmodel.PredictedActivityViewModel

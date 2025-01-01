@@ -1,146 +1,70 @@
 package com.example.burnify.ui.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import com.example.burnify.util.getLastPredictionsFromSharedPreferences
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
+import com.example.burnify.databinding.DataScreenBinding
 import com.example.burnify.viewmodel.AccelerometerViewModel
 import com.example.burnify.viewmodel.GyroscopeViewModel
 import com.example.burnify.viewmodel.MagnetometerViewModel
+import com.example.burnify.viewmodel.PredictedActivityViewModel
 import com.example.burnify.viewmodel.LastPredictionViewModel
+import com.example.burnify.util.getLastPredictionsFromSharedPreferences
 
-import androidx.compose.ui.graphics.Color
+class DataScreen : Fragment() {
 
-@Composable
-fun DataScreen(
-    accelerometerViewModel: AccelerometerViewModel,
-    gyroscopeViewModel: GyroscopeViewModel,
-    magnetometerViewModel: MagnetometerViewModel,
-    lastPredictionViewModel: LastPredictionViewModel
-) {
-    val context = LocalContext.current
+    private var _binding: DataScreenBinding? = null
+    private val binding get() = _binding!!
 
-    // Observing sensor data
-    val accelerometerData by accelerometerViewModel.accelerometerData.observeAsState()
-    val gyroscopeData by gyroscopeViewModel.gyroscopeData.observeAsState()
-    val magnetometerData by magnetometerViewModel.magnetometerData.observeAsState()
+    // ViewModels for the sensors and predicted activity
+    private val accelerometerViewModel: AccelerometerViewModel by viewModels()
+    private val gyroscopeViewModel: GyroscopeViewModel by viewModels()
+    private val magnetometerViewModel: MagnetometerViewModel by viewModels()
+    private val predictedActivityViewModel: PredictedActivityViewModel by viewModels()
+    private val lastPredictionViewModel: LastPredictionViewModel by viewModels()
 
-    // Observing last prediction data
-    val lastPredictionData by lastPredictionViewModel.lastPredictionData.observeAsState()
+    // Function to update UI based on data from ViewModels
+    private fun updateUI() {
+        // Observe the data from ViewModels
+        accelerometerViewModel.accelerometerData.observe(viewLifecycleOwner, Observer { data ->
+            binding.accelerometerData.text = "Samples: ${data?.getSamples()?.size ?: 0}"
+        })
 
-    // Retrieve last 5 predictions
-    val lastPredictions = getLastPredictionsFromSharedPreferences(context, "predictions").take(5)
+        gyroscopeViewModel.gyroscopeData.observe(viewLifecycleOwner, Observer { data ->
+            binding.gyroscopeData.text = "Samples: ${data?.getSamples()?.size ?: 0}"
+        })
 
-    // UI Layout
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .background(Color.White) // Background color set to white
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Title
-        Text(
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.titleLarge,
-            text = "Sensor Data",
-            color = MaterialTheme.colorScheme.primary
-        )
+        magnetometerViewModel.magnetometerData.observe(viewLifecycleOwner, Observer { data ->
+            binding.magnetometerData.text = "Samples: ${data?.getSamples()?.size ?: 0}"
+        })
 
-        // Sensor Data Cards
-        SensorDataCard("Accelerometer Data", accelerometerData?.getSamples()?.size ?: 0)
-        SensorDataCard("Gyroscope Data", gyroscopeData?.getSamples()?.size ?: 0)
-        SensorDataCard("Magnetometer Data", magnetometerData?.getSamples()?.size ?: 0)
+        lastPredictionViewModel.lastPredictionData.observe(viewLifecycleOwner, Observer { prediction ->
+            binding.predictionData.text = prediction?.toString() ?: "No prediction available."
+        })
 
-        // Last Prediction Card
-        PredictionCard(lastPredictionData?.toString() ?: "No prediction available.")
-
-        // Recent Activities Card
-        RecentActivitiesCard(lastPredictions.map { it.toString() })
+        // Retrieve recent predictions from shared preferences
+        val lastPredictions = getLastPredictionsFromSharedPreferences(requireContext(), "predictions").take(5)
+        binding.recentActivitiesData.text = lastPredictions.joinToString("\n") { it.toString() }
     }
-}
 
-@Composable
-fun SensorDataCard(title: String, sampleCount: Int) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White) // Set card background to white
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Samples: $sampleCount",
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        _binding = DataScreenBinding.inflate(inflater, container, false)
+
+        // Update UI with ViewModel data
+        updateUI()
+
+        return binding.root
     }
-}
 
-@Composable
-fun PredictionCard(lastPredictionData: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White) // Set card background to white
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Last Prediction",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = lastPredictionData,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-@Composable
-fun RecentActivitiesCard(activities: List<String>) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White) // Set card background to white
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Recent Activities",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            if (activities.isNotEmpty()) {
-                activities.forEach { activity ->
-                    Text(
-                        text = "• $activity",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            } else {
-                Text(
-                    text = "No recent activities available.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

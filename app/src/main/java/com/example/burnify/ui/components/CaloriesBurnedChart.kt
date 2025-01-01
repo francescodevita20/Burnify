@@ -1,3 +1,4 @@
+package com.example.burnify.ui.components
 import android.graphics.Color
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
