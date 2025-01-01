@@ -114,7 +114,6 @@ object SensorDataManager {
 
         return unifiedData
     }
-
     /**
      * Sends the complete sensor data to the server via a POST request.
      * @param unifiedSensorData The combined sensor data.
