@@ -1,28 +1,34 @@
 package com.example.burnify.ui.screens
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.example.burnify.R
+import android.util.Log
 import com.example.burnify.databinding.TodayScreenBinding
 import com.example.burnify.processor.CaloriesDataProcessor
 import com.example.burnify.ui.components.ActivityData
 import com.example.burnify.ui.components.HistogramActivityChart
 import com.example.burnify.ui.components.CaloriesBurnedChart
 import com.example.burnify.viewmodel.PredictedActivityViewModel
-import org.json.JSONObject
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import com.example.burnify.util.getSharedPreferences
+
 
 class TodayScreenActivity : Fragment() {
-    private lateinit var binding: TodayScreenBinding
+    private var binding: TodayScreenBinding? = null
+
     private lateinit var viewModel: PredictedActivityViewModel
 
-    private var classes: List<String> = emptyList()
-    private var caloriesData: List<ActivityData> = emptyList()
+    private val caloriesData = mutableStateOf<List<ActivityData>>(emptyList())
+    private val classes = mutableStateOf<List<String>>(emptyList())
+    private val weightString by lazy {
+        (getSharedPreferences(requireContext(), "userdata", "user_data_key")?.get("weight")).toString()
+    }
+    private val weight by lazy { weightString.toFloatOrNull()?.toInt() ?: 70 }
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,59 +45,64 @@ class TodayScreenActivity : Fragment() {
         // Observe data changes
         observeData()
 
-        return binding.root
+        return binding?.root
     }
+
     private fun setupComposeViews() {
-        /*
-        Setup Histogram Chart ComposeView
-         */
-        binding.histogramChartCompose.setContent {
-            CompositionLocalProvider(LocalLifecycleOwner provides viewLifecycleOwner) {
-                HistogramActivityChart(classes = classes)
-            }
+        binding?.histogramChartCompose?.setContent {
+            val currentClasses by classes
+            HistogramActivityChart(classes = currentClasses)
         }
 
-        /*
-        Setup Calories Chart ComposeView
-         */
-        binding.caloriesChartCompose.setContent {
-            CompositionLocalProvider(LocalLifecycleOwner provides viewLifecycleOwner) {
-                CaloriesBurnedChart(activityData = caloriesData)
-            }
+        binding?.caloriesChartCompose?.setContent {
+            val currentCaloriesData by caloriesData
+            CaloriesBurnedChart(activityData = currentCaloriesData)
         }
     }
 
     private fun observeData() {
-        viewModel.predictedActivityData.observe(viewLifecycleOwner) { activityData ->
-            if (activityData != null) {
-                // Update classes for histogram
-                classes = activityData.map { it.label.toString() }
+        viewModel.predictedActivityData.observe(viewLifecycleOwner) { data ->
+            data?.let {
+                // Logging to verify the data is being received
+                Log.d("observeData", "Data received: $it")
 
-                // Update calories data
-                val weight = getStoredWeight()
-                caloriesData = activityData.map {
+                classes.value = it.map { item -> item.label.toString() }
+                caloriesData.value = it.map { item ->
                     ActivityData(
-                        hour = it.processedAt.toInt(),
-                        activityType = it.label.toString(),
+                        hour = item.processedAt.toInt(),
+                        activityType = item.label.toString(),
                         caloriesBurned = CaloriesDataProcessor.processMeasurements(
                             weight,
-                            it.label.toString(),
+                            item.label.toString(),
                             0.00555556f
                         )
                     )
                 }
 
-                // Update total calories text
-                val totalCalories = caloriesData.sumOf { it.caloriesBurned.toDouble() }
-                binding.totalCaloriesText.text = "Total Calories Burned: %.2f kcal".format(totalCalories)
+                // Update the total calories after the data is processed
+                updateTotalCalories()
             }
         }
     }
 
-    private fun getStoredWeight(): Int {
-        val weightString = requireContext().getSharedPreferences("userdata", Context.MODE_PRIVATE)
-            .getString("user_data_key", null)
-            ?.let { JSONObject(it).optString("weight") }
-        return weightString?.toFloatOrNull()?.toInt() ?: 70
+    private fun updateTotalCalories() {
+        // Ensure caloriesData is not null and contains values
+        val total = caloriesData.value?.sumOf { it.caloriesBurned.toDouble() } ?: 0.0
+
+        // Update the TextView on the main thread
+        activity?.runOnUiThread {
+            // Ensure TextView is visible
+            binding?.totalCaloriesText?.visibility = View.VISIBLE
+            binding?.totalCaloriesText?.text = "Total Calories Burned: %.2f kcal".format(total)
+        }
+
+        // Debugging output in the log
+        Log.d("updateTotalCalories", "Total Calories Burned: %.2f kcal".format(total))
     }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding = null
+    }
+
 }

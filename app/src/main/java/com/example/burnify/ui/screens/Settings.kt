@@ -21,8 +21,6 @@ class Settings : Fragment() {
     private var age = ""
     private var gender = "Male"
 
-    private val modes = listOf("Maximum Battery Saving", "Maximum Accuracy")
-    private val genders = listOf("Male", "Female")
     private var _binding: SettingsScreenBinding? = null
     private val binding get() = _binding!!
 
@@ -49,16 +47,20 @@ class Settings : Fragment() {
     }
 
     private fun loadSettings() {
+        // Load working mode setting
         val sharedPreferences = requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE)
         selectedMode = sharedPreferences.getString("workingmode", "Maximum Accuracy") ?: "Maximum Accuracy"
 
         // Load user data for weight, height, age, and gender
-        val userData = getSharedPreferences(requireContext(), "userdata", "user_data_key")
-        weight = userData?.get("weight")?.toString() ?: ""
-        height = userData?.get("height")?.toString() ?: ""
-        age = userData?.get("age")?.toString() ?: ""
-        gender = userData?.get("gender") as? String ?: "Male"
+        val userData = requireContext().getSharedPreferences("userdata", Context.MODE_PRIVATE)
+
+        // Retrieve values safely
+        weight = userData.getInt("weight", -1).takeIf { it != -1 }?.toString() ?: "Not Set"
+        height = userData.getInt("height", -1).takeIf { it != -1 }?.toString() ?: "Not Set"
+        age = userData.getInt("age", -1).takeIf { it != -1 }?.toString() ?: "Not Set"
+        gender = userData.getString("gender", "Male") ?: "Male"
     }
+
 
     private fun setupModeSelection() {
 
@@ -134,4 +136,5 @@ class Settings : Fragment() {
         currentData[key] = value
         setSharedPreferences(requireContext(), currentData, "userdata", "user_data_key")
     }
+
 }

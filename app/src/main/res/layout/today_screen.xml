@@ -82,7 +82,6 @@
                     android:id="@+id/caloriesChartCompose"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
-
                 <TextView
                     android:id="@+id/totalCaloriesText"
                     android:layout_width="match_parent"
@@ -90,7 +89,8 @@
                     android:layout_marginTop="16dp"
                     android:gravity="center"
                     android:textAppearance="@style/TextAppearance.App.BodyLarge"
-                    android:textColor="?attr/colorPrimary" />
+                    android:visibility="visible" />
+
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

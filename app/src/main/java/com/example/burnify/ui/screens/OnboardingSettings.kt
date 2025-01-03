@@ -1,69 +1,128 @@
 package com.example.burnify.ui.screens
 
+import android.content.Context
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.example.burnify.R
-import com.example.burnify.databinding.OnboardingSettingsBinding
-import com.example.burnify.util.setSharedPreferences
-import android.widget.Toast
-import android.os.Handler
-import android.os.Looper
-import androidx.core.content.ContextCompat.getSystemService
-import com.example.burnify.activity.MainActivity
-import android.content.Context
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import com.example.burnify.R
+import com.example.burnify.activity.MainActivity
+import com.example.burnify.databinding.OnboardingSettingsBinding
 
 class OnboardingSettings : Fragment() {
     private var _binding: OnboardingSettingsBinding? = null
     private val binding get() = _binding!!
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = OnboardingSettingsBinding.inflate(inflater, container, false)
 
-        binding.saveButton.setOnClickListener {
-            saveUserData()
-            // Hide the keyboard after the data is saved
-            val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            val view = requireActivity().window.decorView
-            imm.hideSoftInputFromWindow(view.windowToken, 0)
-
-        }
-
+        setupSaveButton()
         return binding.root
     }
 
-    private fun saveUserData() {
-        val weight = binding.weightEditText.text.toString().toIntOrNull() ?: 70
-        val height = binding.heightEditText.text.toString().toIntOrNull() ?: 165
-        val age = binding.ageEditText.text.toString().toIntOrNull() ?: 25
+    private fun setupSaveButton() {
+        binding.saveButton.setOnClickListener {
+            if (validateInput()) {
+                hideKeyboard()
+                saveUserData()
+            }
+        }
+    }
 
-        val selectedGenderId = binding.genderRadioGroup.checkedRadioButtonId
-        val gender = when (selectedGenderId) {
-            R.id.maleRadioButton -> "Male"
-            else -> "Female"
+    private fun validateInput(): Boolean {
+        val weight = binding.weightEditText.text.toString()
+        val height = binding.heightEditText.text.toString()
+        val age = binding.ageEditText.text.toString()
+
+        // Check if any field is empty
+        if (weight.isEmpty() || height.isEmpty() || age.isEmpty()) {
+            showToast("Please fill in all fields")
+            return false
         }
 
-        val userData = mapOf(
-            "weight" to weight,
-            "height" to height,
-            "age" to age,
-            "gender" to gender
-        )
+        // Validate weight (reasonable range: 30-300 kg)
+        val weightValue = weight.toIntOrNull()
+        if (weightValue == null || weightValue < 30 || weightValue > 300) {
+            showToast("Please enter a valid weight (30-300 kg)")
+            return false
+        }
 
-        setSharedPreferences(requireContext(), userData, "userdata", "user_data_key")
-        Toast.makeText(requireContext(), "User data saved!", Toast.LENGTH_SHORT).show()
+        // Validate height (reasonable range: 100-250 cm)
+        val heightValue = height.toIntOrNull()
+        if (heightValue == null || heightValue < 100 || heightValue > 250) {
+            showToast("Please enter a valid height (100-250 cm)")
+            return false
+        }
 
-        Handler(Looper.getMainLooper()).postDelayed({
-            (activity as? MainActivity)?.let { mainActivity ->
-                (activity as? MainActivity)?.switchToMainContent()
+        // Validate age (reasonable range: 13-120 years)
+        val ageValue = age.toIntOrNull()
+        if (ageValue == null || ageValue < 13 || ageValue > 120) {
+            showToast("Please enter a valid age (13-120 years)")
+            return false
+        }
+
+        // Check if gender is selected
+        if (binding.genderRadioGroup.checkedRadioButtonId == -1) {
+            showToast("Please select your gender")
+            return false
+        }
+
+        return true
+    }
+
+    private fun hideKeyboard() {
+        try {
+            val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(requireView().windowToken, 0)
+        } catch (e: Exception) {
+            // Log error but continue with saving
+        }
+    }
+
+    private fun saveUserData() {
+        try {
+            // Get values (already validated)
+            val weight = binding.weightEditText.text.toString().toInt()
+            val height = binding.heightEditText.text.toString().toInt()
+            val age = binding.ageEditText.text.toString().toInt()
+            val gender = when (binding.genderRadioGroup.checkedRadioButtonId) {
+                R.id.maleRadioButton -> "Male"
+                R.id.femaleRadioButton -> "Female"
+                else -> throw IllegalStateException("Gender not selected")
             }
-        }, 1000)
+
+            // Save to SharedPreferences
+            requireContext().getSharedPreferences("userdata", Context.MODE_PRIVATE)
+                .edit()
+                .putInt("weight", weight)
+                .putInt("height", height)
+                .putInt("age", age)
+                .putString("gender", gender)
+                .apply()
+
+            showToast("User data saved successfully!")
+
+            // Switch to main content after short delay
+            Handler(Looper.getMainLooper()).postDelayed({
+                (activity as? MainActivity)?.switchToMainContent()
+            }, 500) // Reduced delay to 500ms for better UX
+
+        } catch (e: Exception) {
+            showToast("Error saving data. Please try again.")
+        }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroyView() {
@@ -71,7 +130,3 @@ class OnboardingSettings : Fragment() {
         _binding = null
     }
 }
-
-
-
-

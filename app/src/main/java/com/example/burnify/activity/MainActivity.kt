@@ -18,11 +18,7 @@ import com.example.burnify.ui.screens.OnboardingSettings
 import com.example.burnify.util.SensorDataManager
 import com.example.burnify.util.setSharedPreferences
 import com.example.burnify.util.getSharedPreferences
-import com.example.burnify.viewmodel.AccelerometerViewModel
-import com.example.burnify.viewmodel.GyroscopeViewModel
 import com.example.burnify.viewmodel.LastPredictionViewModel
-import com.example.burnify.viewmodel.MagnetometerViewModel
-import com.example.burnify.viewmodel.PredictedActivityViewModel
 import com.example.burnify.R
 
 /**
@@ -30,99 +26,82 @@ import com.example.burnify.R
  */
 class MainActivity : AppCompatActivity() {
 
-    // ViewModels for the sensors and predicted activity
-    private val accelerometerViewModel: AccelerometerViewModel by viewModels()
-    private val gyroscopeViewModel: GyroscopeViewModel by viewModels()
-    private val magnetometerViewModel: MagnetometerViewModel by viewModels()
-    private val predictedActivityViewModel: PredictedActivityViewModel by viewModels()
     private val lastPredictionViewModel: LastPredictionViewModel by viewModels()
-
-    // ViewBinding instance to bind XML layout
     private lateinit var binding: ActivityMainBinding
-    val mainBinding get() = binding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         // Initialize view binding
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         SensorDataManager.lastPredictionViewModel = lastPredictionViewModel
 
-        // Show battery optimization dialog if necessary
-        showBatteryOptimizationDialog()
-        // Start sensor services (accelerometer, gyroscope, magnetometer)
-        startUnifiedSensorService()
-        // navigate from screen to screen
-        nav()
+        // Check user data before initializing other components
+        if (checkUserDataAndNavigate()) {
+            initializeAppComponents()
+        }
+    }
+    private fun checkUserDataAndNavigate(): Boolean {
+        val sharedPrefs = getSharedPreferences("userdata", MODE_PRIVATE)
 
-        Log.d("MainActivity", "onCreate called")
+        val hasAllData = sharedPrefs.contains("weight") &&
+                sharedPrefs.contains("height") &&
+                sharedPrefs.contains("age") &&
+                sharedPrefs.contains("gender")
 
-        // Retrieve user data from SharedPreferences
-        val userData = getSharedPreferences("userdata", MODE_PRIVATE)
+        return if (!hasAllData) {
+            Log.d("MainActivity", "User data missing, showing OnboardingSettings fragment")
 
-        // Check if user data is missing
-        if (userData == null || !userData.contains("weight") || !userData.contains("height") || !userData.contains("age")) {
-            Log.d("MainActivity", "User data missing, navigating to OnboardingSettings fragment")
-
-            // Hide main content and show the OnboardingSettings fragment
+            // Hide navigation and main content
+            binding.bottomNavigation.visibility = View.GONE
             binding.fragmentContainerView6.visibility = View.GONE
             binding.onboardingSettings.visibility = View.VISIBLE
 
-            // Replace the OnboardingSettings fragment into the container
+            // Load the OnboardingSettings fragment
             supportFragmentManager.beginTransaction()
-                .replace(R.id.onboardingSettings, OnboardingSettings())  // Ensure correct container ID
+                .replace(R.id.onboardingSettings, OnboardingSettings())
                 .commit()
 
-            // Return early to avoid further UI setup
-            return
+            false
+        } else {
+            // Show main content
+            binding.bottomNavigation.visibility = View.VISIBLE
+            binding.fragmentContainerView6.visibility = View.VISIBLE
+            binding.onboardingSettings.visibility = View.GONE
+            true
         }
+    }
+
+    private fun initializeAppComponents() {
+        showBatteryOptimizationDialog()
+        startUnifiedSensorService()
+        nav()
 
     }
     /**
      *switch from onboardingsettings screen to main content
      **/
     fun switchToMainContent() {
+        // Show main content
+        binding.bottomNavigation.visibility = View.VISIBLE
         binding.fragmentContainerView6.visibility = View.VISIBLE
         binding.onboardingSettings.visibility = View.GONE
+
+        // Initialize app components
+        initializeAppComponents()
     }
 
     /**
      *function to set the navigation component using botomNavigation Nav_graph
      */
     private fun nav() {
-        val navHostFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainerView6) as NavHostFragment
-        val navController = navHostFragment.navController
-        binding.bottomNavigation.setupWithNavController(navController)
-    }
-    /**
-     * Function to update the UI based on sensor data
-     */
-    private fun updateUI() {
-        // Observe changes in the accelerometer data
-        accelerometerViewModel.accelerometerData.observe(this) { data ->
-            binding.accelerometerDataTextView.text = "Accelerometer Data: $data"
-        }
-
-        // Observe changes in the gyroscope data
-        gyroscopeViewModel.gyroscopeData.observe(this) { data ->
-            binding.gyroscopeDataTextView.text = "Gyroscope Data: $data"
-        }
-
-        // Observe changes in the magnetometer data
-        magnetometerViewModel.magnetometerData.observe(this) { data ->
-            binding.magnetometerDataTextView.text = "Magnetometer Data: $data"
-        }
-
-        // Observe predicted activity data
-        predictedActivityViewModel.predictedActivityData.observe(this) { data ->
-            binding.predictedActivityTextView.text = "Predicted Activity: $data"
-        }
-
-        // Observe last prediction data
-        lastPredictionViewModel.lastPredictionData.observe(this) { data ->
-            binding.lastPredictionTextView.text = "Last Prediction: $data"
+        try {
+            val navHostFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainerView6) as NavHostFragment
+            val navController = navHostFragment.navController
+            binding.bottomNavigation.setupWithNavController(navController)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error setting up navigation", e)
         }
     }
 
