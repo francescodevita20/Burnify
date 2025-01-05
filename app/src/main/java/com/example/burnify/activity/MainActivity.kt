@@ -2,11 +2,14 @@ package com.example.burnify.activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -21,6 +24,8 @@ import com.example.burnify.util.setSharedPreferences
 import com.example.burnify.util.getSharedPreferences
 import com.example.burnify.viewmodel.LastPredictionViewModel
 import com.example.burnify.R
+import android.graphics.Color
+
 
 /**
  * MainActivity is the entry point of the app where sensor services are initialized and the UI is set.
@@ -82,7 +87,6 @@ class MainActivity : AppCompatActivity() {
     private fun initializeAppComponents() {
         startUnifiedSensorService()
         nav()
-
     }
     /**
      *switch from onboardingsettings screen to main content
@@ -96,7 +100,6 @@ class MainActivity : AppCompatActivity() {
         // Initialize app components
         initializeAppComponents()
     }
-
     /**
      *function to set the navigation component using botomNavigation Nav_graph
      */
@@ -109,7 +112,6 @@ class MainActivity : AppCompatActivity() {
             Log.e("MainActivity", "Error setting up navigation", e)
         }
     }
-
     /**
      * Shows a dialog asking the user to disable battery optimization if it's not already disabled.
      */
@@ -166,24 +168,45 @@ class MainActivity : AppCompatActivity() {
             Log.e("MainActivity", "Failed to start UnifiedSensorService", e)
         }
     }
-
+    /**
+     * Stops the UnifiedSensorService.
+     */
+    private fun stopUnifiedSensorService() {
+        // Make sure to stop the service when exiting
+        val unifiedServiceIntent = Intent(this, UnifiedSensorService::class.java)
+        stopService(unifiedServiceIntent)
+        Log.d("MainActivity", "UnifiedSensorService stopped successfully.")
+    }
 
     private fun setupToolbarTitleBasedOnFragment() {
-        // Make sure the NavController is correctly initialized
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainerView6) as? NavHostFragment
         val navController = navHostFragment?.navController
 
         if (navController != null) {
-            // Now that navController is available, observe fragment changes
             navController.addOnDestinationChangedListener { _, destination, _ ->
                 val fragmentLabel = destination.label.toString()
 
                 when (fragmentLabel) {
-                    "today_screen" -> setToolbarTitle("Today's Screen")
-                    "settings_screen" -> setToolbarTitle("Settings")
-                    "data_screen" -> setToolbarTitle("Data Screen")
-                    "onboarding_settings" -> setToolbarTitle("Onboarding")
-                    else -> setToolbarTitle("Burnify")
+                    "today_screen" -> {
+                        setToolbarTitle("Today's Screen")
+                        supportActionBar?.setDisplayHomeAsUpEnabled(false)
+                        invalidateOptionsMenu()  // This will trigger the menu to be recreated (including the Exit button)
+                    }
+                    "settings_screen" -> {
+                        setToolbarTitle("Settings")
+                        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+                        invalidateOptionsMenu()  // Ensure the Exit button is hidden when on other screens
+                    }
+                    "data_screen" -> {
+                        setToolbarTitle("Data Screen")
+                        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+                        invalidateOptionsMenu()  // Ensure the Exit button is hidden when on other screens
+                    }
+                    else -> {
+                        setToolbarTitle("Burnify")
+                        supportActionBar?.setDisplayHomeAsUpEnabled(false)
+                        invalidateOptionsMenu()  // Ensure the Exit button is hidden when on other screens
+                    }
                 }
             }
         } else {
@@ -194,7 +217,37 @@ class MainActivity : AppCompatActivity() {
     private fun setToolbarTitle(title: String) {
         supportActionBar?.title = title
     }
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_exit -> {
+                item.icon?.setTintList(ColorStateList.valueOf(Color.RED))
+                // Stop the UnifiedSensorService before exiting the app
+                stopUnifiedSensorService()
+                finish()  // This will close the app or activity when "Exit" is clicked
+                true
+            }
+            android.R.id.home -> {
+                onBackPressed()  // This triggers back navigation
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // Get the current fragment displayed in the NavHostFragment
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainerView6) as? NavHostFragment
+        val navController = navHostFragment?.navController
+        val currentDestination = navController?.currentDestination
+
+        // Check if the current fragment is the "Today Screen"
+        if (currentDestination != null && currentDestination.label == "today_screen") {
+            // Inflate the menu only if we are on the "Today" screen
+            menuInflater.inflate(R.menu.toolbar_menu, menu)
+        }
+
+        return true
+    }
     /**
      * Retrieves settings from SharedPreferences or sets default values if no settings are found.
      */

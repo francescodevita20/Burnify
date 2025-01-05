@@ -8,16 +8,6 @@
     android:background="@android:color/white"
     tools:context=".ui.screens.Settings">
 
-    <!-- Title -->
-    <TextView
-        android:id="@+id/titleTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Settings"
-        android:textAlignment="center"
-        android:textSize="24sp"
-        android:textColor="@android:color/black"
-        android:layout_marginBottom="16dp"/>
 
     <!-- Mode Section -->
         <TextView
