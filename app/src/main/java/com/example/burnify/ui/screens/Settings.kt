@@ -7,7 +7,9 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.burnify.R
 import com.example.burnify.databinding.SettingsScreenBinding
@@ -15,14 +17,17 @@ import com.example.burnify.util.getSharedPreferences
 import com.example.burnify.util.setSharedPreferences
 
 class Settings : Fragment() {
-    private var selectedMode = "Maximum Battery Saving"
-    private var weight = ""
-    private var height = ""
-    private var age = ""
-    private var gender = "Male"
-
     private var _binding: SettingsScreenBinding? = null
     private val binding get() = _binding!!
+
+    private val userData = UserSettings()
+    private class UserSettings {
+        var selectedMode: String = "Maximum Battery Saving"
+        var weight: String = ""
+        var height: String = ""
+        var age: String = ""
+        var gender: String = "Male"
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -30,93 +35,80 @@ class Settings : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = SettingsScreenBinding.inflate(inflater, container, false)
-
-        // Load settings from SharedPreferences
-        loadSettings()
-
-        // Set up the Mode CardView and the gender radio buttons
-        setupModeSelection()
-        setupUserInformation()
-
+        initializeSettings()
         return binding.root
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    private fun initializeSettings() {
+        loadSettings()
+        setupModeSelection()
+        setupUserInformation()
+        setupUpdateButton()
     }
 
     private fun loadSettings() {
-        // Load working mode setting
-        val sharedPreferences = requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE)
-        selectedMode = sharedPreferences.getString("workingmode", "Maximum Accuracy") ?: "Maximum Accuracy"
+        requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE).apply {
+            userData.selectedMode = getString("workingmode", "Maximum Accuracy") ?: "Maximum Accuracy"
+        }
 
-        // Load user data for weight, height, age, and gender
-        val userData = requireContext().getSharedPreferences("userdata", Context.MODE_PRIVATE)
-
-        // Retrieve values safely
-        weight = userData.getInt("weight", -1).takeIf { it != -1 }?.toString() ?: "Not Set"
-        height = userData.getInt("height", -1).takeIf { it != -1 }?.toString() ?: "Not Set"
-        age = userData.getInt("age", -1).takeIf { it != -1 }?.toString() ?: "Not Set"
-        gender = userData.getString("gender", "Male") ?: "Male"
+        requireContext().getSharedPreferences("userdata", Context.MODE_PRIVATE).apply {
+            userData.weight = getInt("weight", -1).takeIf { it != -1 }?.toString() ?: "Not Set"
+            userData.height = getInt("height", -1).takeIf { it != -1 }?.toString() ?: "Not Set"
+            userData.age = getInt("age", -1).takeIf { it != -1 }?.toString() ?: "Not Set"
+            userData.gender = getString("gender", "Male") ?: "Male"
+        }
     }
 
-
     private fun setupModeSelection() {
-
-
-        // Set up the RadioGroup with predefined RadioButtons in XML
         binding.ModeRadioGroup.apply {
-            // Ensure the correct radio button is checked based on selectedMode
-            when (selectedMode) {
+            when (userData.selectedMode) {
                 "Maximum Accuracy" -> binding.modeMaxAccuracyRadioButton.isChecked = true
                 "Maximum Battery Saving" -> binding.modesavedModeRadioButton.isChecked = true
             }
 
-            // Listen for mode changes
             setOnCheckedChangeListener { _, checkedId ->
-                selectedMode = when (checkedId) {
+                userData.selectedMode = when (checkedId) {
                     R.id.modeMaxAccuracyRadioButton -> "Maximum Accuracy"
                     R.id.modesavedModeRadioButton -> "Maximum Battery Saving"
-                    else -> selectedMode
+                    else -> userData.selectedMode
                 }
-                // Save selected mode to SharedPreferences
-                requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE)
-                    .edit()
-                    .putString("workingmode", selectedMode)
-                    .apply()
+                saveModeSettings()
             }
         }
     }
 
+    private fun saveModeSettings() {
+        requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE)
+            .edit()
+            .putString("workingmode", userData.selectedMode)
+            .apply()
+    }
 
     private fun setupUserInformation() {
         binding.apply {
-            // Set up TextWatchers
-            weightEditText.setupTextWatcher("weight")
-            heightEditText.setupTextWatcher("height")
-            ageEditText.setupTextWatcher("age")
-
-            // Set initial values
-            weightEditText.setText(weight)
-            heightEditText.setText(height)
-            ageEditText.setText(age)
-
-            // Set up gender radio group
-            genderRadioGroup.setOnCheckedChangeListener { _, checkedId ->
-                gender = when (checkedId) {
-                    R.id.genderMaleRadioButton -> "Male"
-                    R.id.genderFemaleRadioButton -> "Female"
-                    else -> gender
-                }
-                updateUserData("gender", gender)
+            weightEditText.apply {
+                setText(userData.weight)
+                setupTextWatcher("weight")
+            }
+            heightEditText.apply {
+                setText(userData.height)
+                setupTextWatcher("height")
+            }
+            ageEditText.apply {
+                setText(userData.age)
+                setupTextWatcher("age")
             }
 
-            // Set initial gender selection
-            if (gender == "Male") {
-                genderMaleRadioButton.isChecked = true
-            } else {
-                genderFemaleRadioButton.isChecked = true
+            genderRadioGroup.apply {
+                check(if (userData.gender == "Male") R.id.genderMaleRadioButton else R.id.genderFemaleRadioButton)
+                setOnCheckedChangeListener { _, checkedId ->
+                    userData.gender = when (checkedId) {
+                        R.id.genderMaleRadioButton -> "Male"
+                        R.id.genderFemaleRadioButton -> "Female"
+                        else -> userData.gender
+                    }
+                    updateUserData("gender", userData.gender)
+                }
             }
         }
     }
@@ -131,10 +123,103 @@ class Settings : Fragment() {
         })
     }
 
-    private fun updateUserData(key: String, value: String) {
-        val currentData = getSharedPreferences(requireContext(), "userdata", "user_data_key")?.toMutableMap() ?: mutableMapOf()
-        currentData[key] = value
-        setSharedPreferences(requireContext(), currentData, "userdata", "user_data_key")
+    private fun setupUpdateButton() {
+        binding.updateButton.setOnClickListener {
+            if (validateUserInput()) {
+                saveUserData()
+                hideKeyboard()
+            }
+        }
     }
 
+    private fun validateUserInput(): Boolean {
+        val weight = binding.weightEditText.text.toString()
+        val height = binding.heightEditText.text.toString()
+        val age = binding.ageEditText.text.toString()
+
+        return when {
+            weight.isEmpty() || height.isEmpty() || age.isEmpty() -> {
+                showToast("Please fill in all fields")
+                false
+            }
+            !validateWeight(weight.toIntOrNull()) -> false
+            !validateHeight(height.toIntOrNull()) -> false
+            !validateAge(age.toIntOrNull()) -> false
+            binding.genderRadioGroup.checkedRadioButtonId == -1 -> {
+                showToast("Please select your gender")
+                false
+            }
+            binding.ModeRadioGroup.checkedRadioButtonId == -1 -> {
+                showToast("Please select mode")
+                false
+            }
+            else -> true
+        }
+    }
+
+    private fun validateWeight(weight: Int?) = when {
+        weight == null || weight < 30 || weight > 300 -> {
+            showToast("Please enter a valid weight (30-300 kg)")
+            false
+        }
+        else -> true
+    }
+
+    private fun validateHeight(height: Int?) = when {
+        height == null || height < 100 || height > 250 -> {
+            showToast("Please enter a valid height (100-250 cm)")
+            false
+        }
+        else -> true
+    }
+
+    private fun validateAge(age: Int?) = when {
+        age == null || age < 13 || age > 120 -> {
+            showToast("Please enter a valid age (13-120 years)")
+            false
+        }
+        else -> true
+    }
+
+    private fun saveUserData() {
+        try {
+            requireContext().getSharedPreferences("userdata", Context.MODE_PRIVATE)
+                .edit()
+                .putInt("weight", binding.weightEditText.text.toString().toInt())
+                .putInt("height", binding.heightEditText.text.toString().toInt())
+                .putInt("age", binding.ageEditText.text.toString().toInt())
+                .putString("gender", userData.gender)
+                .apply()
+
+            showToast("Settings updated successfully")
+        } catch (e: Exception) {
+            showToast("Error saving settings. Please try again.")
+        }
+    }
+
+    private fun updateUserData(key: String, value: String) {
+        getSharedPreferences(requireContext(), "userdata", "user_data_key")?.toMutableMap()
+            ?.also { currentData ->
+                currentData[key] = value
+                setSharedPreferences(requireContext(), currentData, "userdata", "user_data_key")
+            }
+    }
+
+    private fun hideKeyboard() {
+        try {
+            val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(requireView().windowToken, 0)
+        } catch (e: Exception) {
+            // Keyboard hiding failed silently
+        }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }

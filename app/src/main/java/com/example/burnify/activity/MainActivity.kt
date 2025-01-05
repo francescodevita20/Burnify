@@ -10,6 +10,7 @@ import android.util.Log
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.burnify.databinding.ActivityMainBinding
@@ -35,12 +36,17 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        //setup the toolbar
+        setSupportActionBar(binding.toolbar)
+
         SensorDataManager.lastPredictionViewModel = lastPredictionViewModel
 
         // Check user data before initializing other components
         if (checkUserDataAndNavigate()) {
+            showBatteryOptimizationDialog()
             initializeAppComponents()
         }
+        setupToolbarTitleBasedOnFragment()
     }
     private fun checkUserDataAndNavigate(): Boolean {
         val sharedPrefs = getSharedPreferences("userdata", MODE_PRIVATE)
@@ -74,7 +80,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initializeAppComponents() {
-        showBatteryOptimizationDialog()
         startUnifiedSensorService()
         nav()
 
@@ -162,6 +167,34 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    private fun setupToolbarTitleBasedOnFragment() {
+        // Make sure the NavController is correctly initialized
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainerView6) as? NavHostFragment
+        val navController = navHostFragment?.navController
+
+        if (navController != null) {
+            // Now that navController is available, observe fragment changes
+            navController.addOnDestinationChangedListener { _, destination, _ ->
+                val fragmentLabel = destination.label.toString()
+
+                when (fragmentLabel) {
+                    "today_screen" -> setToolbarTitle("Today's Screen")
+                    "settings_screen" -> setToolbarTitle("Settings")
+                    "data_screen" -> setToolbarTitle("Data Screen")
+                    "onboarding_settings" -> setToolbarTitle("Onboarding")
+                    else -> setToolbarTitle("Burnify")
+                }
+            }
+        } else {
+            Log.e("MainActivity", "NavController is null, unable to set toolbar title")
+        }
+    }
+
+    private fun setToolbarTitle(title: String) {
+        supportActionBar?.title = title
+    }
+
     /**
      * Retrieves settings from SharedPreferences or sets default values if no settings are found.
      */
@@ -181,5 +214,5 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         Log.d("MainActivity", "onDestroy called")
     }
-    
+
 }

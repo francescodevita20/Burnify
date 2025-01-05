@@ -1,6 +1,7 @@
 package com.example.burnify.util
 
 import android.content.Context
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -108,6 +109,8 @@ fun getLastPredictionsFromSharedPreferences(context: Context, sharedPreferencesN
         val predictionsJson = sharedPreferences.getString("last_predictions", "[]")
         val predictionsArray = JSONArray(predictionsJson)
 
+        Log.d("DataScreen", "Retrieved predictions JSON: $predictionsJson")
+
         // Convert JSONArray to a list of integers
         val predictionsList = mutableListOf<Int>()
         for (i in 0 until predictionsArray.length()) {
@@ -115,6 +118,8 @@ fun getLastPredictionsFromSharedPreferences(context: Context, sharedPreferencesN
         }
 
         println("Retrieved last predictions: $predictionsList")
+        Log.d("DataScreen", "Converted predictions list: $predictionsList")
+
         predictionsList
     } catch (e: Exception) {
         println("Error retrieving predictions: ${e.message}")

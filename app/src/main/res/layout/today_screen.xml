@@ -23,7 +23,7 @@
             android:gravity="center"
             android:text="Today's Overview"
             android:textAppearance="@style/TextAppearance.App.TitleLarge"
-            android:textColor="?attr/colorPrimary" />
+             />
 
         <!-- Activity Histogram Card -->
         <androidx.cardview.widget.CardView

@@ -6,136 +6,36 @@
     android:layout_height="match_parent"
     tools:context=".ui.screens.DataScreen">
 
-    <!-- Title Text -->
+    <!-- Prediction Card -->
+
     <TextView
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Sensor Data"
-        android:textSize="24sp"
+        android:layout_marginStart="32dp"
+        android:text="Activity Prediction"
+        android:textAlignment="textStart"
         android:textColor="@android:color/black"
-        android:textAlignment="center"
-        app:layout_constraintBottom_toTopOf="@+id/accelerometerCard"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <!-- Accelerometer Card -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/accelerometerCard"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:cardElevation="8dp"
-        app:cardCornerRadius="4dp"
-        app:layout_constraintBottom_toTopOf="@+id/gyroscopeCard"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/title">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:id="@+id/accelerometerLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Accelerometer Data"
-                android:textSize="18sp"
-                android:textColor="@android:color/black" />
-
-            <TextView
-                android:id="@+id/accelerometerData"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Samples: 0"
-                android:textSize="16sp" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <!-- Gyroscope Card -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/gyroscopeCard"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:cardElevation="8dp"
-        app:cardCornerRadius="4dp"
-        app:layout_constraintBottom_toTopOf="@+id/magnetometerCard"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/accelerometerCard">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:id="@+id/gyroscopeLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Gyroscope Data"
-                android:textSize="18sp"
-                android:textColor="@android:color/black" />
-
-            <TextView
-                android:id="@+id/gyroscopeData"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Samples: 0"
-                android:textSize="16sp" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <!-- Magnetometer Card -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/magnetometerCard"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:cardElevation="8dp"
-        app:cardCornerRadius="4dp"
+        android:textSize="24sp"
         app:layout_constraintBottom_toTopOf="@+id/predictionCard"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/gyroscopeCard">
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="25dp"/>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:id="@+id/magnetometerLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Magnetometer Data"
-                android:textSize="18sp"
-                android:textColor="@android:color/black" />
-
-            <TextView
-                android:id="@+id/magnetometerData"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Samples: 0"
-                android:textSize="16sp" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <!-- Prediction Card -->
     <androidx.cardview.widget.CardView
         android:id="@+id/predictionCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:cardElevation="8dp"
-        app:cardCornerRadius="4dp"
+        app:cardCornerRadius="15dp"
         app:layout_constraintBottom_toTopOf="@+id/recentActivitiesCard"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/magnetometerCard">
+        app:layout_constraintTop_toBottomOf="@id/title"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -147,9 +47,9 @@
                 android:id="@+id/predictionLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Last Prediction"
-                android:textSize="18sp"
-                android:textColor="@android:color/black" />
+                android:text="Current Activity"
+                android:textColor="@android:color/black"
+                android:textSize="18sp" />
 
             <TextView
                 android:id="@+id/predictionData"
@@ -166,11 +66,14 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:cardElevation="8dp"
-        app:cardCornerRadius="4dp"
+        app:cardCornerRadius="15dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/predictionCard">
+        app:layout_constraintTop_toBottomOf="@id/predictionCard"
+        android:layout_marginBottom="400dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -194,5 +97,7 @@
                 android:textSize="16sp" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
+    <!-- Recent Activities Card -->
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,6 +1,7 @@
 package com.example.burnify.ui.screens
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,10 +9,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import com.example.burnify.databinding.DataScreenBinding
-import com.example.burnify.viewmodel.AccelerometerViewModel
-import com.example.burnify.viewmodel.GyroscopeViewModel
-import com.example.burnify.viewmodel.MagnetometerViewModel
-import com.example.burnify.viewmodel.PredictedActivityViewModel
 import com.example.burnify.viewmodel.LastPredictionViewModel
 import com.example.burnify.util.getLastPredictionsFromSharedPreferences
 
@@ -20,47 +17,55 @@ class DataScreen : Fragment() {
     private var _binding: DataScreenBinding? = null
     private val binding get() = _binding!!
 
-    // ViewModels for the sensors and predicted activity
-    private val accelerometerViewModel: AccelerometerViewModel by viewModels()
-    private val gyroscopeViewModel: GyroscopeViewModel by viewModels()
-    private val magnetometerViewModel: MagnetometerViewModel by viewModels()
-    private val predictedActivityViewModel: PredictedActivityViewModel by viewModels()
+    // Use viewModels() delegate for ViewModel initialization
     private val lastPredictionViewModel: LastPredictionViewModel by viewModels()
 
-    // Function to update UI based on data from ViewModels
-    private fun updateUI() {
-        // Observe the data from ViewModels
-        accelerometerViewModel.accelerometerData.observe(viewLifecycleOwner, Observer { data ->
-            binding.accelerometerData.text = "Samples: ${data?.getSamples()?.size ?: 0}"
-        })
-
-        gyroscopeViewModel.gyroscopeData.observe(viewLifecycleOwner, Observer { data ->
-            binding.gyroscopeData.text = "Samples: ${data?.getSamples()?.size ?: 0}"
-        })
-
-        magnetometerViewModel.magnetometerData.observe(viewLifecycleOwner, Observer { data ->
-            binding.magnetometerData.text = "Samples: ${data?.getSamples()?.size ?: 0}"
-        })
-
-        lastPredictionViewModel.lastPredictionData.observe(viewLifecycleOwner, Observer { prediction ->
-            binding.predictionData.text = prediction?.toString() ?: "No prediction available."
-        })
-
-        // Retrieve recent predictions from shared preferences
-        val lastPredictions = getLastPredictionsFromSharedPreferences(requireContext(), "predictions").take(5)
-        binding.recentActivitiesData.text = lastPredictions.joinToString("\n") { it.toString() }
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = DataScreenBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        _binding = DataScreenBinding.inflate(inflater, container, false)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupObservers()
+        updateRecentPredictions()
+    }
 
-        // Update UI with ViewModel data
-        updateUI()
+    private fun setupObservers() {
+        lastPredictionViewModel.lastPredictionData.observe(viewLifecycleOwner) { prediction ->
+            try {
+                binding.predictionData.text = prediction?.toString() ?: "No prediction available"
+                Log.d("DataScreen", "Prediction updated: $prediction")
+            } catch (e: Exception) {
+                Log.e("DataScreen", "Error updating prediction: ${e.message}")
+            }
+        }
+    }
 
-        return binding.root
+    private fun updateRecentPredictions() {
+        try {
+            val lastPredictions = getLastPredictionsFromSharedPreferences(requireContext(), "predictions")
+                .take(5)
+            /*
+            val lastPredictions = listOf(
+                "Prediction 1",
+                "Prediction 2",
+                "Prediction 3",
+                "Prediction 4",
+                "Prediction 5"
+            ).take(5)
+             */
+
+            binding.recentActivitiesData.text = lastPredictions.joinToString("\n") { it.toString() }
+            Log.d("DataScreen", "Recent predictions updated: $lastPredictions")
+        } catch (e: Exception) {
+            Log.e("DataScreen", "Error updating recent predictions: ${e.message}")
+            binding.recentActivitiesData.text = "Unable to load recent predictions"
+        }
     }
 
     override fun onDestroyView() {
