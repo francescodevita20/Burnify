@@ -116,7 +116,6 @@ fun getLastPredictionsFromSharedPreferences(context: Context, sharedPreferencesN
         for (i in 0 until predictionsArray.length()) {
             predictionsList.add(predictionsArray.getInt(i))
         }
-
         println("Retrieved last predictions: $predictionsList")
         Log.d("DataScreen", "Converted predictions list: $predictionsList")
 

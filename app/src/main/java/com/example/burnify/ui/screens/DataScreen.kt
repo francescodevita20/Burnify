@@ -48,9 +48,9 @@ class DataScreen : Fragment() {
 
     private fun updateRecentPredictions() {
         try {
-            /*val lastPredictions = getLastPredictionsFromSharedPreferences(requireContext(), "predictions")
-                .take(5)*/
-
+            val lastPredictions = getLastPredictionsFromSharedPreferences(requireContext(), "predictions")
+                .take(5)
+/*
             val lastPredictions = listOf(
                 "Prediction 1",
                 "Prediction 2",
@@ -58,7 +58,7 @@ class DataScreen : Fragment() {
                 "Prediction 4",
                 "Prediction 5"
             ).take(5)
-
+*/
 
             binding.recentActivitiesData.text = lastPredictions.joinToString("\n") { it.toString() }
             Log.d("DataScreen", "Recent predictions updated: $lastPredictions")
