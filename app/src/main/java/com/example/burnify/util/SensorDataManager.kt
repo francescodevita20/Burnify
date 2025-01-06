@@ -11,10 +11,19 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.io.InputStream
+import java.security.KeyStore
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManagerFactory
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import javax.net.ssl.X509TrustManager
+import javax.net.ssl.HostnameVerifier
+
 
 object SensorDataManager {
     var lastPredictionViewModel: LastPredictionViewModel? = null
@@ -114,6 +123,7 @@ object SensorDataManager {
 
         return unifiedData
     }
+
     /**
      * Sends the complete sensor data to the server via a POST request.
      * @param unifiedSensorData The combined sensor data.
@@ -127,11 +137,13 @@ object SensorDataManager {
         println("BODYYY: $jsonData")
 
         val request = Request.Builder()
-            .url("https://18.158.61.166:8000/predict/")   // Replace with your server's URL
+            .url("https://18.158.61.166:8000/predict/")  // Replace with your server's URL
             .post(body)
             .build()
 
-        val client = OkHttpClient()
+        // Create OkHttpClient with custom SSLContext for the self-signed certificate
+        val client = getOkHttpClientWithPKCS12Cert(context)
+
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 println("HttpRequests: POST request failed. Error: ${e.message}")
@@ -215,4 +227,43 @@ object SensorDataManager {
         gyroscopeData.clear()
         magnetometerData.clear()
     }
+
+    /**
+     * Creates an OkHttpClient with the custom SSLContext for the self-signed certificate.
+     * Disables hostname verification for development purposes.
+     * @param context The application context.
+     * @return An OkHttpClient instance with the custom SSL configuration.
+     */
+    private fun getOkHttpClientWithPKCS12Cert(context: Context): OkHttpClient {
+        // Load the self-signed certificate from the assets
+        val certInputStream: InputStream = context.assets.open("selfsigned.crt")
+        val certificateFactory = CertificateFactory.getInstance("X.509")
+        val cert = certificateFactory.generateCertificate(certInputStream) as X509Certificate
+
+        // Initialize KeyStore and add the certificate
+        val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
+        keyStore.load(null, null)
+        keyStore.setCertificateEntry("cert", cert)
+
+        // Create a TrustManagerFactory using the KeyStore
+        val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+        trustManagerFactory.init(keyStore)
+
+        // Initialize SSLContext with the TrustManager
+        val sslContext = SSLContext.getInstance("TLS")
+        sslContext.init(null, trustManagerFactory.trustManagers, null)
+
+        // Disable hostname verification (development only)
+        val hostnameVerifier = HostnameVerifier { _, _ -> true }
+
+        // Return OkHttpClient with the custom SSLContext and disabled hostname verification
+        return OkHttpClient.Builder()
+            .sslSocketFactory(
+                sslContext.socketFactory,
+                trustManagerFactory.trustManagers[0] as X509TrustManager
+            )
+            .hostnameVerifier(hostnameVerifier) // Disable hostname verification
+            .build()
+    }
+
 }
