@@ -37,7 +37,7 @@ fun DataScreen(
     val lastPredictionData by lastPredictionViewModel.lastPredictionData.observeAsState()
 
     // Retrieve last 5 predictions
-    val lastPredictions = getLastPredictionsFromSharedPreferences(context, "predictions").take(5)
+    val lastPredictions = getLastPredictionsFromSharedPreferences(context, "last_predictions").take(5)
 
     // UI Layout
     Column(
