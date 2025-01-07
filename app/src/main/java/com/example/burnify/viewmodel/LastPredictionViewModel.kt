@@ -6,22 +6,24 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.burnify.util.addPredictionToSharedPreferences
-
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class LastPredictionViewModel(application: Application) : AndroidViewModel(application) {
+    private val _lastPredictionData = MutableLiveData<Int>()
+    val lastPredictionData: LiveData<Int> = _lastPredictionData
 
-    private val _lastPredictionData = MutableLiveData<Int>() // Singolo campione
-
-    val lastPredictionData : LiveData<Int> get() = _lastPredictionData
-    fun updateLastPredictionData(lastPrediction: Int){
-        val context = getApplication<Application>().applicationContext
-        val lastPredictionsName="last_predictions"
-        addPredictionToSharedPreferences(context, lastPrediction, lastPredictionsName)
-        _lastPredictionData.postValue(lastPrediction)
-        Log.d("LastPredictionViewModel", "Last prediction data updated: $lastPrediction")
-        println("Last Prediction: $lastPrediction")
+    fun updateLastPredictionData(lastPrediction: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val context = getApplication<Application>().applicationContext
+            val saveSuccess = addPredictionToSharedPreferences(context, lastPrediction, "predictions")
+            if (saveSuccess) {
+                Log.d("LastPredictionViewModel", "Updating prediction data with: $lastPrediction")
+                _lastPredictionData.postValue(lastPrediction)
+                Log.d("LastPredictionViewModel", "LiveData updated with: $lastPrediction")
+            }
+        }
     }
-
-
 }

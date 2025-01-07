@@ -2,6 +2,7 @@ package com.example.burnify.util
 
 import android.content.Context
 import android.util.Log
+import com.example.burnify.ui.screens.DataScreen
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -62,38 +63,46 @@ fun clearSharedPreferences(context: Context, sharedPreferencesName: String) {
     } catch (e: Exception) {
         println("Error clearing SharedPreferences: ${e.message}")
     }
-}
-
-/**
+}/**
  * Adds a prediction to the SharedPreferences, keeping only the last 5 predictions.
  * @param context The application context.
  * @param predictedClass The predicted class to add.
  * @param sharedPreferencesName The name of the SharedPreferences.
+ * @return Boolean indicating if the save was successful
  */
-fun addPredictionToSharedPreferences(context: Context, predictedClass: Int, sharedPreferencesName: String) {
-    try {
+@Synchronized
+fun addPredictionToSharedPreferences(context: Context, predictedClass: Int, sharedPreferencesName: String): Boolean {
+    return try {
         val sharedPreferences = context.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE)
-        val editor = sharedPreferences.edit()
 
-        // Retrieve existing predictions
-        val predictionsJson = sharedPreferences.getString("last_predictions", "[]")
-        val predictionsArray = JSONArray(predictionsJson)
+        // Get current predictions or initialize new list
+        val currentPredictions = getLastPredictionsFromSharedPreferences(context, sharedPreferencesName)
+        val updatedPredictions = currentPredictions.toMutableList()
 
-        // Add the new prediction
-        predictionsArray.put(predictedClass)
+        // Add new prediction
+        updatedPredictions.add(predictedClass)
 
-        // Keep only the last 5 predictions
-        if (predictionsArray.length() > 5) {
-            predictionsArray.remove(0)
+        // Keep only last 5 predictions
+        while (updatedPredictions.size > 5) {
+            updatedPredictions.removeAt(0)
         }
 
-        // Save the updated predictions
-        editor.putString("last_predictions", predictionsArray.toString())
-        editor.apply()
+        // Convert to JSON and save
+        val jsonArray = JSONArray(updatedPredictions)
+        val saveSuccess = sharedPreferences.edit()
+            .putString("last_predictions", jsonArray.toString())
+            .commit()
 
-        println("Prediction added successfully: $predictedClass. Updated predictions: $predictionsArray")
+        if (saveSuccess) {
+            Log.d("SharedPreferences", "Successfully saved predictions: $jsonArray")
+        } else {
+            Log.e("SharedPreferences", "Failed to save predictions")
+        }
+
+        saveSuccess
     } catch (e: Exception) {
-        println("Error adding prediction: ${e.message}")
+        Log.e("SharedPreferences", "Error saving prediction: ${e.message}")
+        false
     }
 }
 
@@ -103,25 +112,31 @@ fun addPredictionToSharedPreferences(context: Context, predictedClass: Int, shar
  * @param sharedPreferencesName The name of the SharedPreferences.
  * @return A list of the last 5 predictions.
  */
+@Synchronized
 fun getLastPredictionsFromSharedPreferences(context: Context, sharedPreferencesName: String): List<Int> {
     return try {
         val sharedPreferences = context.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE)
-        val predictionsJson = sharedPreferences.getString("last_predictions", "[]")
+        val predictionsJson = sharedPreferences.getString("last_predictions", null)
+
+        // If no data exists yet, return empty list
+        if (predictionsJson == null) {
+            Log.d("SharedPreferences", "No predictions found in SharedPreferences")
+            return emptyList()
+        }
+
+        // Parse JSON array to list
         val predictionsArray = JSONArray(predictionsJson)
-
-        Log.d("DataScreen", "Retrieved predictions JSON: $predictionsJson")
-
-        // Convert JSONArray to a list of integers
         val predictionsList = mutableListOf<Int>()
+
         for (i in 0 until predictionsArray.length()) {
             predictionsList.add(predictionsArray.getInt(i))
         }
-        println("Retrieved last predictions: $predictionsList")
-        Log.d("DataScreen", "Converted predictions list: $predictionsList")
 
+        Log.d("SharedPreferences", "Retrieved predictions: $predictionsList")
         predictionsList
+
     } catch (e: Exception) {
-        println("Error retrieving predictions: ${e.message}")
+        Log.e("SharedPreferences", "Error retrieving predictions: ${e.message}")
         emptyList()
     }
 }
