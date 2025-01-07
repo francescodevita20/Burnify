@@ -12,6 +12,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.burnify.R
+import com.example.burnify.activity.MainActivity
 import com.example.burnify.databinding.SettingsScreenBinding
 import com.example.burnify.util.getSharedPreferences
 import com.example.burnify.util.setSharedPreferences
@@ -44,6 +45,7 @@ class Settings : Fragment() {
         setupModeSelection()
         setupUserInformation()
         setupUpdateButton()
+        stopApp()
     }
 
     private fun loadSettings() {
@@ -205,6 +207,16 @@ class Settings : Fragment() {
             }
     }
 
+    private fun stopApp() {
+        binding.stop.setOnClickListener {
+            val activity = requireActivity() as MainActivity  // Ensure the activity is of type MainActivity
+            activity.stopUnifiedSensorService()  // Stop the UnifiedSensorService
+            activity.finish()
+        }
+    }
+
+
+
     private fun hideKeyboard() {
         try {
             val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -213,6 +225,8 @@ class Settings : Fragment() {
             // Keyboard hiding failed silently
         }
     }
+
+
 
     private fun showToast(message: String) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()

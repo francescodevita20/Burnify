@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * Stops the UnifiedSensorService.
      */
-    private fun stopUnifiedSensorService() {
+    fun stopUnifiedSensorService() {
         // Make sure to stop the service when exiting
         val unifiedServiceIntent = Intent(this, UnifiedSensorService::class.java)
         stopService(unifiedServiceIntent)
@@ -241,7 +241,7 @@ class MainActivity : AppCompatActivity() {
         val currentDestination = navController?.currentDestination
 
         // Check if the current fragment is the "Today Screen"
-        if (currentDestination != null && currentDestination.label == "today_screen") {
+        if (currentDestination != null && currentDestination.label == "settings_screen") {
             // Inflate the menu only if we are on the "Today" screen
             menuInflater.inflate(R.menu.toolbar_menu, menu)
         }
