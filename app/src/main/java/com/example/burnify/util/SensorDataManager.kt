@@ -97,7 +97,7 @@ object SensorDataManager {
      * @param accelerometerData The accelerometer data.
      * @param gyroscopeData The gyroscope data.
      * @param magnetometerData The magnetometer data.
-     * @return The unified sensor data (500 rows, 9 columns).
+     * @return The unified sensor data (50 rows, 9 columns).
      */
     private fun combineSensorData(
         accelerometerData: List<List<Float>>,
@@ -156,7 +156,7 @@ object SensorDataManager {
                         println("HttpRequests: POST request successful. Response: $bodyString")
                         try {
                             val jsonObject = JSONObject(bodyString)
-                            val predictedClass = jsonObject.getInt("predicted_class")
+                            val predictedClass = jsonObject.getInt("predicted_label")
                             println("Predicted class: $predictedClass")
 
                             // Update the LastPredictionViewModel

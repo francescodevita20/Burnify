@@ -11,7 +11,6 @@ import com.example.burnify.database.dao.ActivityPredictionDao
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeFormatterBuilder
 
 class PredictedActivityViewModel(application: Application) : AndroidViewModel(application) {
 
