@@ -12,8 +12,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class LastPredictionViewModel(application: Application) : AndroidViewModel(application) {
-    private val _lastPredictionData = MutableLiveData<Int>()
-    val lastPredictionData: LiveData<Int> = _lastPredictionData
+    private val _lastPredictionData = MutableLiveData<Int?>()
+    val lastPredictionData: MutableLiveData<Int?> = _lastPredictionData
 
     private val _recentPredictions = MutableLiveData<List<Int>>()
     val recentPredictions: LiveData<List<Int>> = _recentPredictions
