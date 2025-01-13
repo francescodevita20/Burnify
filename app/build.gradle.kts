@@ -21,7 +21,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -57,9 +58,6 @@ dependencies {
     implementation ("androidx.compose.ui:ui:1.5.1") // Use the latest version
     implementation ("androidx.compose.foundation:foundation:1.5.1")
     implementation ("org.apache.commons:commons-math3:3.6.1")
-    implementation ("org.tensorflow:tensorflow-lite:2.13.0")
-    implementation ("org.tensorflow:tensorflow-lite-support:0.4.4")
-    implementation ("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation ("androidx.compose.ui:ui-viewbinding:1.5.15")
     implementation ("androidx.navigation:navigation-fragment-ktx:2.7.0")  // or the latest version
