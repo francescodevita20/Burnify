@@ -99,6 +99,10 @@ async def predict(timeseries: TimeSeriesInput):
             if col not in features_df.columns:
                 features_df[col] = 0
 
+        # Log the integer prediction to a file
+        with open("predictions.log", "a") as f:
+            f.write(f"{predicted_label} ")
+            
         # Ensure the columns are in the correct order
         features_df = features_df[expected_columns]
 
