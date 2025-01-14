@@ -137,7 +137,7 @@ object SensorDataManager {
         println("BODYYY: $jsonData")
 
         val request = Request.Builder()
-            .url("https://18.158.61.166:8000/predict/")  // Replace with your server's URL
+            .url("http://10.0.2.2:8000/predict/")  // Replace with your server's URL
             .post(body)
             .build()
 
@@ -156,7 +156,7 @@ object SensorDataManager {
                         println("HttpRequests: POST request successful. Response: $bodyString")
                         try {
                             val jsonObject = JSONObject(bodyString)
-                            val predictedClass = jsonObject.getInt("predicted_label")
+                            val predictedClass = jsonObject.getString("predicted_label")
                             println("Predicted class: $predictedClass")
 
                             // Update the LastPredictionViewModel
@@ -208,7 +208,7 @@ object SensorDataManager {
      * @param dao The activity prediction DAO.
      * @param label The predicted activity label.
      */
-    suspend fun insertActivityPredictionToDB(dao: ActivityPredictionDao, label: Int) {
+    suspend fun insertActivityPredictionToDB(dao: ActivityPredictionDao, label: String) {
         val currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 
         val activityPrediction = ActivityPrediction(

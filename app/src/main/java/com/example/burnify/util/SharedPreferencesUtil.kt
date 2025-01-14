@@ -63,15 +63,17 @@ fun clearSharedPreferences(context: Context, sharedPreferencesName: String) {
     } catch (e: Exception) {
         println("Error clearing SharedPreferences: ${e.message}")
     }
-}/**
+}
+
+/**
  * Adds a prediction to the SharedPreferences, keeping only the last 5 predictions.
  * @param context The application context.
  * @param predictedClass The predicted class to add.
  * @param sharedPreferencesName The name of the SharedPreferences.
- * @return Boolean indicating if the save was successful
+ * @return Boolean indicating if the save was successful.
  */
 @Synchronized
-fun addPredictionToSharedPreferences(context: Context, predictedClass: Int, sharedPreferencesName: String): Boolean {
+fun addPredictionToSharedPreferences(context: Context, predictedClass: String, sharedPreferencesName: String): Boolean {
     return try {
         val sharedPreferences = context.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE)
 
@@ -110,10 +112,10 @@ fun addPredictionToSharedPreferences(context: Context, predictedClass: Int, shar
  * Retrieves the last 5 predictions from SharedPreferences.
  * @param context The application context.
  * @param sharedPreferencesName The name of the SharedPreferences.
- * @return A list of the last 5 predictions.
+ * @return A list of the last 5 predictions as strings.
  */
 @Synchronized
-fun getLastPredictionsFromSharedPreferences(context: Context, sharedPreferencesName: String): List<Int> {
+fun getLastPredictionsFromSharedPreferences(context: Context, sharedPreferencesName: String): List<String> {
     return try {
         val sharedPreferences = context.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE)
         val predictionsJson = sharedPreferences.getString("last_predictions", null)
@@ -124,12 +126,12 @@ fun getLastPredictionsFromSharedPreferences(context: Context, sharedPreferencesN
             return emptyList()
         }
 
-        // Parse JSON array to list
+        // Parse JSON array to list of strings
         val predictionsArray = JSONArray(predictionsJson)
-        val predictionsList = mutableListOf<Int>()
+        val predictionsList = mutableListOf<String>()
 
         for (i in 0 until predictionsArray.length()) {
-            predictionsList.add(predictionsArray.getInt(i))
+            predictionsList.add(predictionsArray.getString(i))
         }
 
         Log.d("SharedPreferences", "Retrieved predictions: $predictionsList")

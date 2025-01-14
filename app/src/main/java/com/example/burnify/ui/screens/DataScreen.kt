@@ -39,7 +39,7 @@ class DataScreen : Fragment() {
         lastPredictionViewModel.lastPredictionData.observe(viewLifecycleOwner) { prediction ->
             Log.d("DataScreen", "Prediction updated: $prediction")
             binding.predictionData.text = when {
-                prediction != null -> prediction.toString()
+                prediction != null -> prediction // Assuming prediction is now a String
                 else -> "No prediction available"
             }
         }
@@ -48,7 +48,7 @@ class DataScreen : Fragment() {
         lastPredictionViewModel.recentPredictions.observe(viewLifecycleOwner) { predictions ->
             Log.d("DataScreen", "Recent predictions updated: $predictions")
             binding.recentActivitiesData.text = if (predictions.isNotEmpty()) {
-                predictions.joinToString("\n")
+                predictions.joinToString("\n") // Predictions are now strings, no need for .toString() on each
             } else {
                 "No predictions available"
             }

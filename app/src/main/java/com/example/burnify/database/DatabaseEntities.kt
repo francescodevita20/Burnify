@@ -185,5 +185,5 @@ data class InputModel(
 data class ActivityPrediction(
     @PrimaryKey(autoGenerate = true) val id: Int = 0, // Auto-generated ID for each prediction
     val processedAt: String, // Timestamp of when the prediction was made
-    var label: Int? = -1 // Predicted activity label (default to -1 for unknown/undefined activity)
+    var label: String? = "standing" // Predicted activity label (default to "standing")
 )

@@ -12,11 +12,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class LastPredictionViewModel(application: Application) : AndroidViewModel(application) {
-    private val _lastPredictionData = MutableLiveData<Int?>()
-    val lastPredictionData: MutableLiveData<Int?> = _lastPredictionData
+    private val _lastPredictionData = MutableLiveData<String?>()
+    val lastPredictionData: MutableLiveData<String?> = _lastPredictionData
 
-    private val _recentPredictions = MutableLiveData<List<Int>>()
-    val recentPredictions: LiveData<List<Int>> = _recentPredictions
+    private val _recentPredictions = MutableLiveData<List<String>>()
+    val recentPredictions: LiveData<List<String>> = _recentPredictions
 
     init {
         // Initialize with null
@@ -40,7 +40,7 @@ class LastPredictionViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
-    fun updateLastPredictionData(lastPrediction: Int) {
+    fun updateLastPredictionData(lastPrediction: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val context = getApplication<Application>().applicationContext
