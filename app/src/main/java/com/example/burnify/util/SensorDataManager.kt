@@ -137,7 +137,7 @@ object SensorDataManager {
         println("BODYYY: $jsonData")
 
         val request = Request.Builder()
-            .url("http://10.0.2.2:8000/predict/")  // Replace with your server's URL
+            .url("https://18.158.61.166:8000/predict/")  // Replace with your server's URL
             .post(body)
             .build()
 
