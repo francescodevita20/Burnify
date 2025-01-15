@@ -36,21 +36,28 @@ class PredictedActivityViewModel(application: Application) : AndroidViewModel(ap
                     val nextProcessedAt = next?.let { preprocessTimestamp(it.processedAt) }
 
                     // Calculate duration between current and next prediction
-                    val durationMinutes = if (nextProcessedAt != null) {
+                    val durationSeconds = if (nextProcessedAt != null) {
                         calculateDuration(processedAt, nextProcessedAt)
                     } else {
                         0.0 // If there is no next prediction, set duration as 0
                     }
 
+                    // If the duration exceeds 10 seconds, set it to 10 seconds
+                    val adjustedDuration = if (durationSeconds > 10) {
+                        10.0
+                    } else {
+                        durationSeconds
+                    }
+
                     // Format duration to 1 decimal place
-                    val formattedDuration = String.format(Locale.US, "%.1f", durationMinutes)
+                    val formattedDuration = String.format(Locale.US, "%.1f", adjustedDuration / 60.0)  // Convert seconds to minutes
 
                     // Append duration to label
                     ActivityPredictionWithDuration(
                         id = current.id,
                         processedAt = processedAt,
                         label = current.label ?: "", // Provide default empty string if label is null
-                        durationMinutes = durationMinutes
+                        durationMinutes = adjustedDuration / 60.0 // Store in minutes
                     )
                 }
 
@@ -63,19 +70,22 @@ class PredictedActivityViewModel(application: Application) : AndroidViewModel(ap
         }
     }
 
-
     private fun calculateDuration(startTime: String, endTime: String): Double {
         return try {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
             val start = LocalDateTime.parse(startTime, formatter)
             val end = LocalDateTime.parse(endTime, formatter)
-            val durationSeconds = java.time.Duration.between(end, start).seconds
-            durationSeconds / 60.0 // Convert seconds to fractional minutes
+
+            // Calculate duration in seconds
+            val durationSeconds = java.time.Duration.between(start, end).seconds
+
+            durationSeconds.toDouble() // Return duration in seconds
         } catch (e: Exception) {
             e.printStackTrace()
             0.0 // Fallback in case of errors
         }
     }
+
 
     // Funzione per aggiornare i dati (se necessario)
     fun updatePredictedActivityData(predictions: List<ActivityPredictionWithDuration>) {
