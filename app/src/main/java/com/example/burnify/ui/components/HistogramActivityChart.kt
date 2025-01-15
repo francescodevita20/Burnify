@@ -71,6 +71,8 @@ fun HistogramActivityChart(durations: Map<String, Double>) {
                     val dataSet = BarDataSet(barEntries, "Activity Durations").apply {
                         // Set a light gray color for all bars
                         setColor(Color.parseColor("#B0BEC5"))
+                        // Set the size of the text above the bins
+                        valueTextSize = 12f // Adjust this value as needed
                     }
 
                     // Set the data for the chart
@@ -134,16 +136,6 @@ fun HistogramActivityChart(durations: Map<String, Double>) {
             }, modifier = Modifier
                 .fillMaxWidth()
                 .height(300.dp) // Set chart height
-            )
-
-            // Title under the chart
-            Text(
-                text = "Activity History",
-                style = TextStyle(
-                    color = ComposeColor.Black,
-                    fontSize = 16.sp
-                ),
-                modifier = Modifier.padding(top = 8.dp)
             )
         }
     }

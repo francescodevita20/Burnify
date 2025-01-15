@@ -45,7 +45,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
                     android:gravity="center"
-                    android:text="Activity Histogram"
+                    android:text="Minutes per activity"
                     android:textAppearance="@style/TextAppearance.App.TitleMedium" />
 
                 <androidx.compose.ui.platform.ComposeView

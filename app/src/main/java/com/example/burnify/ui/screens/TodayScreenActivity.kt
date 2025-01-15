@@ -116,7 +116,6 @@ class TodayScreenActivity : Fragment() {
     }
 
     // Function to preprocess timestamp and ensure milliseconds are 3 digits
-    // Function to preprocess timestamp and ensure milliseconds are 3 digits
     private fun preprocessTimestamp(timestamp: String): String {
         val regex = "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})(\\.\\d{1,3})?".toRegex()
 
