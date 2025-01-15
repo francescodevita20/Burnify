@@ -19,15 +19,15 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import androidx.compose.ui.viewinterop.AndroidView
 
 @Composable
-fun HistogramActivityChart(classes: List<String>) {
+fun HistogramActivityChart(durations: Map<String, Double>) {
 
-    // Log the received class data for debugging purposes
-    LaunchedEffect(classes) {
-        println("Received classes: $classes")
+    // Log the received durations for debugging purposes
+    LaunchedEffect(durations) {
+        println("Received durations: $durations")
     }
 
-    // Display loading message if no classes are provided
-    if (classes.isEmpty()) {
+    // Display loading message if no durations are provided
+    if (durations.isEmpty()) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -42,27 +42,23 @@ fun HistogramActivityChart(classes: List<String>) {
             )
         }
     } else {
-        // Get unique classes from the provided list
-        val uniqueClasses = classes.distinct()
+        // Get unique classes from the provided durations map keys
+        val uniqueClasses = durations.keys.toList()
 
-        // Count occurrences of each class in the provided 'classes' list
-        val classOccurrences = uniqueClasses.associateWith { className ->
-            classes.count { it == className }
-        }
+        // Log the unique classes for debugging purposes
+        println("Unique classes: $uniqueClasses")
 
-        // Log the class occurrences for debugging purposes
-        println("Class occurrences: $classOccurrences")
-
-        // Create a list of BarEntry objects from the class occurrences
+        // Create a list of BarEntry objects from the class durations
         val barEntries = uniqueClasses.mapIndexed { index, className ->
-            BarEntry(index.toFloat(), classOccurrences[className]?.toFloat() ?: 0f)
+            val duration = durations[className] ?: 0.0
+            BarEntry(index.toFloat(), duration.toFloat())  // Ensure duration is valid
         }
 
-        // Calculate the maximum occurrence value to set axis range
-        val maxOccurrences = classOccurrences.values.maxOrNull()?.toFloat() ?: 0f
+        // Calculate the maximum duration value to set axis range
+        val maxDuration = durations.values.maxOrNull()?.toFloat() ?: 0f
 
         // Create y-axis values: 0, max/2, max
-        val yValues = listOf(0f, maxOccurrences / 2, maxOccurrences)
+        val yValues = listOf(0f, maxDuration / 2, maxDuration)
 
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -72,7 +68,7 @@ fun HistogramActivityChart(classes: List<String>) {
             AndroidView(factory = { context ->
                 BarChart(context).apply {
                     // Create a dataset for the bar chart
-                    val dataSet = BarDataSet(barEntries, "Class Occurrences").apply {
+                    val dataSet = BarDataSet(barEntries, "Activity Durations").apply {
                         // Set a light gray color for all bars
                         setColor(Color.parseColor("#B0BEC5"))
                     }
@@ -93,8 +89,8 @@ fun HistogramActivityChart(classes: List<String>) {
                     // Set the granularity and range for the left y-axis
                     axisLeft.setGranularity(1f)
                     axisLeft.axisMinimum = 0f
-                    axisLeft.axisMaximum = maxOccurrences * 1.1f // Add a margin to the max y-value
-                    axisLeft.setGranularityEnabled(true) // Enable granularity to avoid small intervals
+                    axisLeft.axisMaximum = maxDuration * 1.1f // Add a margin to the max y-value
+                    axisLeft.isGranularityEnabled = true // Enable granularity to avoid small intervals
 
                     // Add labels at 0, max/2, and max values for clarity
                     axisLeft.setLabelCount(3, true)
@@ -102,8 +98,8 @@ fun HistogramActivityChart(classes: List<String>) {
                         override fun getFormattedValue(value: Float): String {
                             return when (value) {
                                 0f -> "0"
-                                maxOccurrences / 2 -> "${(maxOccurrences / 2).toInt()}"
-                                maxOccurrences -> "${maxOccurrences.toInt()}"
+                                maxDuration / 2 -> "${(maxDuration / 2).toInt()}"
+                                maxDuration -> "${maxDuration.toInt()}"
                                 else -> ""
                             }
                         }
@@ -129,11 +125,11 @@ fun HistogramActivityChart(classes: List<String>) {
                     setDrawMarkers(false)
 
                     // Position the x-axis labels at the bottom to prevent overlap
-                    xAxis.setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM)
+                    xAxis.position = com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM
 
                     // Set axis limits and margin for clarity
                     axisLeft.axisMinimum = 0f
-                    axisLeft.axisMaximum = (maxOccurrences * 1.1f).toFloat()
+                    axisLeft.axisMaximum = (maxDuration * 1.1f).toFloat()
                 }
             }, modifier = Modifier
                 .fillMaxWidth()

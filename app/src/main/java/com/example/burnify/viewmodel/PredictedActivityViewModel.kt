@@ -1,55 +1,89 @@
 package com.example.burnify.viewmodel
 
+import com.example.burnify.util.preprocessTimestamp
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.burnify.database.AppDatabaseProvider
-import com.example.burnify.database.ActivityPrediction
 import com.example.burnify.database.dao.ActivityPredictionDao
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class PredictedActivityViewModel(application: Application) : AndroidViewModel(application) {
 
-    // LiveData per una lista di ActivityPrediction
-    private val _predictedActivityData = MutableLiveData<List<ActivityPrediction>>()
-    val predictedActivityData: LiveData<List<ActivityPrediction>> get() = _predictedActivityData
+    // LiveData per una lista di ActivityPrediction con durata inclusa
+    private val _predictedActivityData = MutableLiveData<List<ActivityPredictionWithDuration>>()
+    val predictedActivityData: LiveData<List<ActivityPredictionWithDuration>> get() = _predictedActivityData
 
     private val activityPredictionDao: ActivityPredictionDao =
         AppDatabaseProvider.getInstance(application).activityPredictionDao()
 
-    // Funzione per caricare i dati dal database
     fun loadPredictedActivityData() {
         viewModelScope.launch {
             try {
-                val predictions =
-                    activityPredictionDao.getSamplesFromLastDay()  // Recupera i dati dal DAO
+                val predictions = activityPredictionDao.getSamplesFromLastDay()
 
-                // Modifica la stringa 'processedAt' per contenere solo l'ora
-                val formattedPredictions = predictions.map {
-                    it.copy(processedAt = getHourFromDate(it.processedAt).toString())
+                // Calculate the duration for each prediction regardless of the label
+                val predictionsWithDurations = predictions.mapIndexed { index, current ->
+                    val next = predictions.getOrNull(index + 1)
+
+                    // Preprocess the timestamps before calculating duration
+                    val processedAt = preprocessTimestamp(current.processedAt)
+                    val nextProcessedAt = next?.let { preprocessTimestamp(it.processedAt) }
+
+                    // Calculate duration between current and next prediction
+                    val durationMinutes = if (nextProcessedAt != null) {
+                        calculateDuration(processedAt, nextProcessedAt)
+                    } else {
+                        0.0 // If there is no next prediction, set duration as 0
+                    }
+
+                    // Format duration to 1 decimal place
+                    val formattedDuration = String.format(Locale.US, "%.1f", durationMinutes)
+
+                    // Append duration to label
+                    ActivityPredictionWithDuration(
+                        id = current.id,
+                        processedAt = processedAt,
+                        label = current.label ?: "", // Provide default empty string if label is null
+                        durationMinutes = durationMinutes
+                    )
                 }
 
-                // Imposta la lista di dati formattati
-                _predictedActivityData.postValue(formattedPredictions)
+                // Post updated predictions with durations to LiveData
+                _predictedActivityData.postValue(predictionsWithDurations)
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Logga o gestisci l'errore in caso di problemi con il caricamento dei dati
+                // Handle error (maybe log it or show a message)
             }
         }
     }
 
+
+    private fun calculateDuration(startTime: String, endTime: String): Double {
+        return try {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+            val start = LocalDateTime.parse(startTime, formatter)
+            val end = LocalDateTime.parse(endTime, formatter)
+            val durationSeconds = java.time.Duration.between(end, start).seconds
+            durationSeconds / 60.0 // Convert seconds to fractional minutes
+        } catch (e: Exception) {
+            e.printStackTrace()
+            0.0 // Fallback in case of errors
+        }
+    }
+
     // Funzione per aggiornare i dati (se necessario)
-    fun updatePredictedActivityData(predictions: List<ActivityPrediction>) {
+    fun updatePredictedActivityData(predictions: List<ActivityPredictionWithDuration>) {
         _predictedActivityData.postValue(predictions)
     }
 
     // Funzione per estrarre solo l'ora dalla data
     fun getHourFromDate(dateString: String): Int {
-
         return try {
             // Normalizza la stringa: aggiunge una cifra mancante nei millisecondi se necessario
             val normalizedDateString = if (dateString.contains(".")) {
@@ -75,6 +109,10 @@ class PredictedActivityViewModel(application: Application) : AndroidViewModel(ap
         }
     }
 
-
+    data class ActivityPredictionWithDuration(
+        val id: Int,
+        val processedAt: String,
+        val label: String,
+        val durationMinutes: Double
+    )
 }
-
