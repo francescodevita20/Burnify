@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white"
+    tools:context=".ui.screens.Settings">
+
+
+    <!-- Mode Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Battery Mode"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp"/>
+
+    <RadioGroup
+        android:id="@+id/ModeRadioGroup"
+        android:layout_width="278dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <!-- MaxAccuracy RadioButton -->
+        <RadioButton
+            android:id="@+id/modeMaxAccuracyRadioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="MaxAccuracy" />
+
+        <!-- savemode RadioButton -->
+        <RadioButton
+            android:id="@+id/modesavedModeRadioButton"
+            android:layout_width="165dp"
+            android:layout_height="wrap_content"
+            android:text="batterysaving" />
+    </RadioGroup>
+
+
+
+
+    <!-- Weight Input -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Weight (kg)"
+        android:textSize="16sp"
+        android:layout_marginTop="8dp"/>
+    <EditText
+        android:id="@+id/weightEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter weight"
+        android:inputType="numberDecimal"/>
+
+    <!-- Height Input -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Height (cm)"
+        android:textSize="16sp"
+        android:layout_marginTop="8dp"/>
+    <EditText
+        android:id="@+id/heightEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter height"
+        android:inputType="number"/>
+
+    <!-- Age Input -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Age"
+        android:textSize="16sp"
+        android:layout_marginTop="8dp"/>
+    <EditText
+        android:id="@+id/ageEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter age"
+        android:inputType="number"/>
+
+    <!-- Gender Radio Buttons -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Gender"
+        android:textSize="16sp"
+        android:layout_marginTop="8dp"/>
+
+    <RadioGroup
+        android:id="@+id/genderRadioGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+
+        <!-- Male RadioButton -->
+        <RadioButton
+            android:id="@+id/genderMaleRadioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Male"
+            android:checked="true" />
+
+        <!-- Female RadioButton -->
+        <RadioButton
+            android:id="@+id/genderFemaleRadioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Female" />
+    </RadioGroup>
+    <Button
+    android:id="@+id/updateButton"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Save" />
+
+    <Button
+        android:id="@+id/stop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Stop "
+        android:layout_marginTop="16dp"/>
+
+</LinearLayout>

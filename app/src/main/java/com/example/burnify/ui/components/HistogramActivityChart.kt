@@ -42,22 +42,19 @@ fun HistogramActivityChart(classes: List<String>) {
             )
         }
     } else {
-        // Define the possible 12 classes (1 to 12)
-        val allClasses = (1..12).map { it.toString() }
+        // Get unique classes from the provided list
+        val uniqueClasses = classes.distinct()
 
         // Count occurrences of each class in the provided 'classes' list
-        val classOccurrences = allClasses.associateWith { className ->
+        val classOccurrences = uniqueClasses.associateWith { className ->
             classes.count { it == className }
         }
 
         // Log the class occurrences for debugging purposes
         println("Class occurrences: $classOccurrences")
 
-        // Sort the classes in order from 1 to 12
-        val sortedClasses = allClasses
-
         // Create a list of BarEntry objects from the class occurrences
-        val barEntries = sortedClasses.mapIndexed { index, className ->
+        val barEntries = uniqueClasses.mapIndexed { index, className ->
             BarEntry(index.toFloat(), classOccurrences[className]?.toFloat() ?: 0f)
         }
 
@@ -115,10 +112,10 @@ fun HistogramActivityChart(classes: List<String>) {
                     // Set x-axis granularity (spacing between labels)
                     xAxis.setGranularity(1f)
 
-                    // Custom x-axis value formatter to display class names from 1 to 12
+                    // Custom x-axis value formatter to display class names (strings)
                     xAxis.valueFormatter = object : ValueFormatter() {
                         override fun getFormattedValue(value: Float): String {
-                            return sortedClasses.getOrElse(value.toInt()) { "" }
+                            return uniqueClasses.getOrElse(value.toInt()) { "" }
                         }
                     }
 

@@ -33,7 +33,7 @@ object SensorDataManager {
     private val gyroscopeData: MutableList<List<Float>> = mutableListOf() // List for gyroscope data
     private val magnetometerData: MutableList<List<Float>> = mutableListOf() // List for magnetometer data
 
-    private const val requiredDataPoints = 200 // Number of data points to collect
+    private const val requiredDataPoints = 50 // Number of data points to collect
 
     /**
      * Updates the accelerometer data (called when new accelerometer data arrives).
@@ -97,7 +97,7 @@ object SensorDataManager {
      * @param accelerometerData The accelerometer data.
      * @param gyroscopeData The gyroscope data.
      * @param magnetometerData The magnetometer data.
-     * @return The unified sensor data (500 rows, 9 columns).
+     * @return The unified sensor data (50 rows, 9 columns).
      */
     private fun combineSensorData(
         accelerometerData: List<List<Float>>,
@@ -156,7 +156,7 @@ object SensorDataManager {
                         println("HttpRequests: POST request successful. Response: $bodyString")
                         try {
                             val jsonObject = JSONObject(bodyString)
-                            val predictedClass = jsonObject.getInt("predicted_class")
+                            val predictedClass = jsonObject.getString("predicted_label")
                             println("Predicted class: $predictedClass")
 
                             // Update the LastPredictionViewModel
@@ -208,7 +208,7 @@ object SensorDataManager {
      * @param dao The activity prediction DAO.
      * @param label The predicted activity label.
      */
-    suspend fun insertActivityPredictionToDB(dao: ActivityPredictionDao, label: Int) {
+    suspend fun insertActivityPredictionToDB(dao: ActivityPredictionDao, label: String) {
         val currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 
         val activityPrediction = ActivityPrediction(

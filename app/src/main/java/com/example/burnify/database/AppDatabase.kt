@@ -17,7 +17,7 @@ import com.example.burnify.database.dao.InputModelDao
  */
 @Database(
     entities = [AccelerometerProcessedSample::class, GyroscopeProcessedSample::class, MagnetometerProcessedSample::class, InputModel::class, ActivityPrediction::class],
-    version = 10 // Increment the version when schema changes occur
+    version = 11 // Increment the version when schema changes occur
 )
 abstract class AppDatabase : RoomDatabase() {
 

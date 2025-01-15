@@ -5,8 +5,6 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-
-
 android {
     namespace = "com.example.burnify"
     compileSdk = 35
@@ -23,7 +21,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -39,6 +38,7 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true  // For KTS, viewBinding is a direct property
     }
 }
 
@@ -47,7 +47,9 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.5") // Usa la versione più recente
     implementation("androidx.compose.material3:material3:1.3.1") // Usa la versione di Material 3
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-    implementation(libs.androidx.adapters) // O l'ultima versione disponibile
+    implementation(libs.androidx.adapters)
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx) // O l'ultima versione disponibile
         // debugImplementation because LeakCanary should only run in debug builds.
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
     implementation ("com.google.code.gson:gson:2.10.1") // Aggiungi questa dipendenza
@@ -56,10 +58,16 @@ dependencies {
     implementation ("androidx.compose.ui:ui:1.5.1") // Use the latest version
     implementation ("androidx.compose.foundation:foundation:1.5.1")
     implementation ("org.apache.commons:commons-math3:3.6.1")
-    implementation ("org.tensorflow:tensorflow-lite:2.13.0")
-    implementation ("org.tensorflow:tensorflow-lite-support:0.4.4")
-    implementation ("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
+    implementation ("androidx.compose.ui:ui-viewbinding:1.5.15")
+    implementation ("androidx.navigation:navigation-fragment-ktx:2.7.0")  // or the latest version
+    implementation ("androidx.navigation:navigation-ui-ktx:2.7.0")
+    implementation ("androidx.compose.material3:material3:<latest_version>")
+    implementation ("com.google.android.material:material:1.7.0")
+
+
+
+
 
 
     dependencies {
@@ -95,8 +103,6 @@ dependencies {
 
 
     }
-
-
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

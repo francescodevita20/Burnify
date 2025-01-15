@@ -4,4 +4,7 @@
     <string name="height_hint">Enter your height (cm)</string>
     <string name="age_hint">Enter your age</string>
     <string name="save_button">Save</string>
+   <string name="total_calories_burned">Total Calories Burned: %s kcal</string>
+   <string name="error_loading_data">Error loading data. Please try again.</string>
+
 </resources>
