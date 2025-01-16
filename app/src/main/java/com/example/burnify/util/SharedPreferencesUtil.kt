@@ -2,11 +2,10 @@ package com.example.burnify.util
 
 import android.content.Context
 import android.util.Log
-import com.example.burnify.ui.screens.DataScreen
+import com.example.burnify.viewmodel.Prediction
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import org.json.JSONArray
 
 fun setSharedPreferences(context: Context, newMap: Map<String, Any>, sharedPreferencesName: String, dataKey: String) {
     try {
@@ -68,12 +67,12 @@ fun clearSharedPreferences(context: Context, sharedPreferencesName: String) {
 /**
  * Adds a prediction to the SharedPreferences, keeping only the last 5 predictions.
  * @param context The application context.
- * @param predictedClass The predicted class to add.
+ * @param prediction The prediction to add.
  * @param sharedPreferencesName The name of the SharedPreferences.
  * @return Boolean indicating if the save was successful.
  */
 @Synchronized
-fun addPredictionToSharedPreferences(context: Context, predictedClass: String, sharedPreferencesName: String): Boolean {
+fun addPredictionToSharedPreferences(context: Context, prediction: Prediction, sharedPreferencesName: String): Boolean {
     return try {
         val sharedPreferences = context.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE)
 
@@ -82,21 +81,23 @@ fun addPredictionToSharedPreferences(context: Context, predictedClass: String, s
         val updatedPredictions = currentPredictions.toMutableList()
 
         // Add new prediction
-        updatedPredictions.add(predictedClass)
+        updatedPredictions.add(prediction)
 
         // Keep only last 5 predictions
         while (updatedPredictions.size > 5) {
             updatedPredictions.removeAt(0)
         }
 
-        // Convert to JSON and save
-        val jsonArray = JSONArray(updatedPredictions)
+        // Convert to JSON array and save
+        val gson = Gson()
+        val predictionsJson = gson.toJson(updatedPredictions)
+
         val saveSuccess = sharedPreferences.edit()
-            .putString("last_predictions", jsonArray.toString())
+            .putString("last_predictions", predictionsJson)
             .commit()
 
         if (saveSuccess) {
-            Log.d("SharedPreferences", "Successfully saved predictions: $jsonArray")
+            Log.d("SharedPreferences", "Successfully saved predictions: $predictionsJson")
         } else {
             Log.e("SharedPreferences", "Failed to save predictions")
         }
@@ -112,10 +113,10 @@ fun addPredictionToSharedPreferences(context: Context, predictedClass: String, s
  * Retrieves the last 5 predictions from SharedPreferences.
  * @param context The application context.
  * @param sharedPreferencesName The name of the SharedPreferences.
- * @return A list of the last 5 predictions as strings.
+ * @return A list of the last 5 predictions as `Prediction` objects.
  */
 @Synchronized
-fun getLastPredictionsFromSharedPreferences(context: Context, sharedPreferencesName: String): List<String> {
+fun getLastPredictionsFromSharedPreferences(context: Context, sharedPreferencesName: String): List<Prediction> {
     return try {
         val sharedPreferences = context.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE)
         val predictionsJson = sharedPreferences.getString("last_predictions", null)
@@ -126,13 +127,9 @@ fun getLastPredictionsFromSharedPreferences(context: Context, sharedPreferencesN
             return emptyList()
         }
 
-        // Parse JSON array to list of strings
-        val predictionsArray = JSONArray(predictionsJson)
-        val predictionsList = mutableListOf<String>()
-
-        for (i in 0 until predictionsArray.length()) {
-            predictionsList.add(predictionsArray.getString(i))
-        }
+        // Parse JSON array to list of Prediction objects
+        val gson = Gson()
+        val predictionsList: List<Prediction> = gson.fromJson(predictionsJson, Array<Prediction>::class.java).toList()
 
         Log.d("SharedPreferences", "Retrieved predictions: $predictionsList")
         predictionsList

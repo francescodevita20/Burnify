@@ -11,12 +11,19 @@ import com.example.burnify.util.getLastPredictionsFromSharedPreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class LastPredictionViewModel(application: Application) : AndroidViewModel(application) {
-    private val _lastPredictionData = MutableLiveData<String?>()
-    val lastPredictionData: MutableLiveData<String?> = _lastPredictionData
+// Data class for prediction with timestamp and label
+data class Prediction(
+    val timestamp: String,
+    val label: String
+)
 
-    private val _recentPredictions = MutableLiveData<List<String>>()
-    val recentPredictions: LiveData<List<String>> = _recentPredictions
+class LastPredictionViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val _lastPredictionData = MutableLiveData<String?>()
+    val lastPredictionData: LiveData<String?> = _lastPredictionData
+
+    private val _recentPredictions = MutableLiveData<List<Prediction>>()
+    val recentPredictions: LiveData<List<Prediction>> = _recentPredictions
 
     init {
         // Initialize with null
@@ -28,11 +35,11 @@ class LastPredictionViewModel(application: Application) : AndroidViewModel(appli
     private fun loadRecentPredictions() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val predictions = getLastPredictionsFromSharedPreferences(
-                    getApplication<Application>().applicationContext,
-                    "predictions"
-                )
-                _recentPredictions.postValue(predictions)
+                val context = getApplication<Application>().applicationContext
+                val rawPredictions = getLastPredictionsFromSharedPreferences(context, "predictions")
+
+                // No need to split, just use the list of Prediction objects directly
+                _recentPredictions.postValue(rawPredictions)
             } catch (e: Exception) {
                 Log.e("LastPredictionViewModel", "Error loading recent predictions: ${e.message}")
                 _recentPredictions.postValue(emptyList())
@@ -44,13 +51,16 @@ class LastPredictionViewModel(application: Application) : AndroidViewModel(appli
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val context = getApplication<Application>().applicationContext
-                val saveSuccess = addPredictionToSharedPreferences(context, lastPrediction, "predictions")
+
+                // Generate a timestamp
+                val timestamp = System.currentTimeMillis().toString() // You can format for better readability
+                val prediction = Prediction(timestamp = timestamp, label = lastPrediction)
+
+                val saveSuccess = addPredictionToSharedPreferences(context, prediction, "predictions")
                 if (saveSuccess) {
-                    Log.d("LastPredictionViewModel", "Updating prediction data with: $lastPrediction")
+                    Log.d("LastPredictionViewModel", "Updating prediction data with: $prediction")
                     _lastPredictionData.postValue(lastPrediction)
-                    // Reload recent predictions after adding new one
                     loadRecentPredictions()
-                    Log.d("LastPredictionViewModel", "LiveData updated with: $lastPrediction")
                 } else {
                     Log.e("LastPredictionViewModel", "Failed to save prediction")
                 }
@@ -58,5 +68,20 @@ class LastPredictionViewModel(application: Application) : AndroidViewModel(appli
                 Log.e("LastPredictionViewModel", "Error updating prediction: ${e.message}")
             }
         }
+    }
+
+    // Filter predictions to remove continuous identical labels
+    fun filterNonContinuousPredictions(predictions: List<Prediction>): List<Prediction> {
+        if (predictions.isEmpty()) return emptyList()
+
+        val filtered = mutableListOf<Prediction>()
+        filtered.add(predictions[0]) // Always add the first prediction
+
+        for (i in 1 until predictions.size) {
+            if (predictions[i].label != predictions[i - 1].label) {
+                filtered.add(predictions[i])
+            }
+        }
+        return filtered
     }
 }

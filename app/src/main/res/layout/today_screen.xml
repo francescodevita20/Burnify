@@ -25,36 +25,6 @@
             android:textAppearance="@style/TextAppearance.App.TitleLarge"
              />
 
-        <!-- Activity Histogram Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
-            app:cardBackgroundColor="@android:color/white">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:gravity="center"
-                    android:text="Minutes per activity"
-                    android:textAppearance="@style/TextAppearance.App.TitleMedium" />
-
-                <androidx.compose.ui.platform.ComposeView
-                    android:id="@+id/histogramChartCompose"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
         <!-- Calories Burned Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -91,6 +61,36 @@
                     android:textAppearance="@style/TextAppearance.App.BodyLarge"
                     android:visibility="visible" />
 
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Activity Histogram Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="@android:color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="center"
+                    android:text="Minutes per activity"
+                    android:textAppearance="@style/TextAppearance.App.TitleMedium" />
+
+                <androidx.compose.ui.platform.ComposeView
+                    android:id="@+id/histogramChartCompose"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
