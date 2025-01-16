@@ -3,21 +3,20 @@ package com.example.burnify.viewmodel
 import com.example.burnify.util.preprocessTimestamp
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.burnify.database.AppDatabaseProvider
 import com.example.burnify.database.dao.ActivityPredictionDao
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 class PredictedActivityViewModel(application: Application) : AndroidViewModel(application) {
 
-    // LiveData per una lista di ActivityPrediction con durata inclusa
-    private val _predictedActivityData = MutableLiveData<List<ActivityPredictionWithDuration>>()
-    val predictedActivityData: LiveData<List<ActivityPredictionWithDuration>> get() = _predictedActivityData
+    // StateFlow per una lista di ActivityPrediction con durata inclusa
+    private val _predictedActivityData = MutableStateFlow<List<ActivityPredictionWithDuration>>(emptyList())
+    val predictedActivityData: StateFlow<List<ActivityPredictionWithDuration>> get() = _predictedActivityData
 
     private val activityPredictionDao: ActivityPredictionDao =
         AppDatabaseProvider.getInstance(application).activityPredictionDao()
@@ -25,7 +24,7 @@ class PredictedActivityViewModel(application: Application) : AndroidViewModel(ap
     fun loadPredictedActivityData() {
         viewModelScope.launch {
             try {
-                val predictions = activityPredictionDao.getSamplesFromLastDay()
+                val predictions = activityPredictionDao.getSamplesFromToday()
 
                 // Calculate the duration for each prediction regardless of the label
                 val predictionsWithDurations = predictions.mapIndexed { index, current ->
@@ -36,14 +35,16 @@ class PredictedActivityViewModel(application: Application) : AndroidViewModel(ap
                     val nextProcessedAt = next?.let { preprocessTimestamp(it.processedAt) }
 
                     // Calculate duration between current and next prediction
-                    val durationMinutes = if (nextProcessedAt != null) {
-                        calculateDuration(processedAt, nextProcessedAt)
-                    } else {
-                        0.0 // If there is no next prediction, set duration as 0
-                    }
+                    var durationMinutes = 0.0
+                    if (nextProcessedAt != null) {
+                        durationMinutes = calculateDuration(processedAt, nextProcessedAt)
 
-                    // Format duration to 1 decimal place
-                    val formattedDuration = String.format(Locale.US, "%.1f", durationMinutes)
+                        // Check for a gap longer than a threshold (e.g., 1 hour or 60 minutes)
+                        val gapDuration = calculateDuration(processedAt, nextProcessedAt)
+                        if (gapDuration > 0.25) { // Adjust this threshold based on your needs
+                            durationMinutes = 0.10 // Set duration to 0 if there is a long gap
+                        }
+                    }
 
                     // Append duration to label
                     ActivityPredictionWithDuration(
@@ -54,15 +55,14 @@ class PredictedActivityViewModel(application: Application) : AndroidViewModel(ap
                     )
                 }
 
-                // Post updated predictions with durations to LiveData
-                _predictedActivityData.postValue(predictionsWithDurations)
+                // Emit updated predictions with durations to StateFlow
+                _predictedActivityData.value = predictionsWithDurations
             } catch (e: Exception) {
                 e.printStackTrace()
                 // Handle error (maybe log it or show a message)
             }
         }
     }
-
 
     private fun calculateDuration(startTime: String, endTime: String): Double {
         return try {
@@ -79,7 +79,7 @@ class PredictedActivityViewModel(application: Application) : AndroidViewModel(ap
 
     // Funzione per aggiornare i dati (se necessario)
     fun updatePredictedActivityData(predictions: List<ActivityPredictionWithDuration>) {
-        _predictedActivityData.postValue(predictions)
+        _predictedActivityData.value = predictions
     }
 
     // Funzione per estrarre solo l'ora dalla data
