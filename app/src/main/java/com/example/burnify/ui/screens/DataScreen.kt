@@ -37,16 +37,16 @@ class DataScreen : Fragment() {
     private fun setupObservers() {
         Log.d("DataScreen", "Setting up observers")
 
-        // Observe last prediction
+        // Observe the most recent prediction
         lastPredictionViewModel.lastPredictionData.observe(viewLifecycleOwner) { prediction ->
             Log.d("DataScreen", "Prediction updated: $prediction")
             binding.predictionData.text = when {
-                prediction != null -> prediction // Assuming prediction is now a String (label only)
+                prediction != null -> prediction // prediction is a String (label)
                 else -> "No prediction available"
             }
         }
 
-        // Observe recent predictions
+        // Observe the list of recent predictions
         lastPredictionViewModel.recentPredictions.observe(viewLifecycleOwner) { predictions ->
             Log.d("DataScreen", "Recent predictions updated: $predictions")
             binding.recentActivitiesData.text = if (predictions.isNotEmpty()) {

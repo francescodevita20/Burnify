@@ -7,9 +7,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.burnify.util.addPredictionToSharedPreferences
-import com.example.burnify.util.getLastPredictionsFromSharedPreferences
+import com.example.burnify.util.getTodayPredictionsFromSharedPreferences
+import com.example.burnify.util.clearSharedPreferencesForNewDay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 // Data class for prediction with timestamp and label
 data class Prediction(
@@ -36,16 +39,48 @@ class LastPredictionViewModel(application: Application) : AndroidViewModel(appli
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val context = getApplication<Application>().applicationContext
-                val rawPredictions = getLastPredictionsFromSharedPreferences(context, "predictions")
 
-                // No need to split, just use the list of Prediction objects directly
-                _recentPredictions.postValue(rawPredictions)
+                // Step 1: Get all the predictions stored in SharedPreferences for today
+                val rawPredictions = getTodayPredictionsFromSharedPreferences(context, "predictions")
+
+                // Step 2: Check if the last prediction's date is different from today
+                val lastPrediction = rawPredictions.lastOrNull()
+                val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+                if (lastPrediction != null) {
+                    // If lastPrediction is not null, check its date
+                    val lastPredictionDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(lastPrediction.timestamp.toLong()))
+
+                    if (lastPredictionDate != currentDate) {
+                        // A) If the last prediction's date is not today, clear SharedPreferences and save the current prediction
+                        clearSharedPreferencesForNewDay(context, "predictions")
+
+                        // Create a new prediction for today (this is just an example; you should replace this with the actual prediction logic)
+                        val newPrediction = Prediction(timestamp = System.currentTimeMillis().toString(), label = "CurrentActivity")
+
+                        // Save the current prediction to SharedPreferences
+                        addPredictionToSharedPreferences(context, newPrediction, "predictions")
+
+                        // Update recent predictions with only the current prediction
+                        _recentPredictions.postValue(listOf(newPrediction))
+                    } else {
+                        // B) If the last prediction is from today, just update the recent predictions with the list from SharedPreferences
+                        _recentPredictions.postValue(rawPredictions)
+                    }
+                } else {
+                    // If no predictions are available, create and save the first prediction
+                    val newPrediction = Prediction(timestamp = System.currentTimeMillis().toString(), label = "CurrentActivity")
+                    addPredictionToSharedPreferences(context, newPrediction, "predictions")
+                    _recentPredictions.postValue(listOf(newPrediction))
+                }
+
             } catch (e: Exception) {
                 Log.e("LastPredictionViewModel", "Error loading recent predictions: ${e.message}")
                 _recentPredictions.postValue(emptyList())
             }
         }
     }
+
 
     fun updateLastPredictionData(lastPrediction: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -68,20 +103,5 @@ class LastPredictionViewModel(application: Application) : AndroidViewModel(appli
                 Log.e("LastPredictionViewModel", "Error updating prediction: ${e.message}")
             }
         }
-    }
-
-    // Filter predictions to remove continuous identical labels
-    fun filterNonContinuousPredictions(predictions: List<Prediction>): List<Prediction> {
-        if (predictions.isEmpty()) return emptyList()
-
-        val filtered = mutableListOf<Prediction>()
-        filtered.add(predictions[0]) // Always add the first prediction
-
-        for (i in 1 until predictions.size) {
-            if (predictions[i].label != predictions[i - 1].label) {
-                filtered.add(predictions[i])
-            }
-        }
-        return filtered
     }
 }
