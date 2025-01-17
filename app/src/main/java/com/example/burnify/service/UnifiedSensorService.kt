@@ -45,17 +45,17 @@ class UnifiedSensorService : Service(), SensorEventListener {
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         magnetometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
 
-        // Retrieve working mode from SharedPreferences
-        val workingMode = com.example.burnify.util.getSharedPreferences(
-            applicationContext,
-            "settings",
-            "settings_key"
-        )?.get("workingmode") as? String
+        // Retrieve working mode directly from SharedPreferences
+        val sharedPreferences = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val workingMode = sharedPreferences.getString("workingmode", "maxaccuracy") // Default to "maxaccuracy" if not set
+
+        // Determine the sampling delay based on the working mode
         val samplingDelay = if (workingMode == "maxbatterysaving") {
-            800_000 // 800 milliseconds in microseconds
+            SensorManager.SENSOR_DELAY_NORMAL // Normal delay for battery saving mode
         } else {
             SensorManager.SENSOR_DELAY_UI // Default UI delay
         }
+
 
         // Log the selected delay
         Log.d("SensorService", "Working mode: $workingMode, Sampling delay: $samplingDelay")
