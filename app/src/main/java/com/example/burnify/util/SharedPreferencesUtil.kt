@@ -103,7 +103,7 @@ fun getTodayPredictionsFromSharedPreferences(context: Context, sharedPreferences
 
         if (predictionsJson == null || predictionsJson.isEmpty()) {
             // If no data exists, return an empty list or fetch all predictions for today
-            Log.d("SharedPreferences", "No predictions found, fetching all for today...")
+            Log.d("SharedPreferences", "No predictions found, returning empty list...")
             return emptyList() // Replace this with logic to fetch today's predictions
         }
 

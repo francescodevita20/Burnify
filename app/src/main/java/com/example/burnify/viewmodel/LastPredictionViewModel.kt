@@ -55,23 +55,15 @@ class LastPredictionViewModel(application: Application) : AndroidViewModel(appli
                         // A) If the last prediction's date is not today, clear SharedPreferences and save the current prediction
                         clearSharedPreferencesForNewDay(context, "predictions")
 
-                        // Create a new prediction for today (this is just an example; you should replace this with the actual prediction logic)
-                        val newPrediction = Prediction(timestamp = System.currentTimeMillis().toString(), label = "CurrentActivity")
-
-                        // Save the current prediction to SharedPreferences
-                        addPredictionToSharedPreferences(context, newPrediction, "predictions")
-
-                        // Update recent predictions with only the current prediction
-                        _recentPredictions.postValue(listOf(newPrediction))
+                        // Update recent predictions with an empty list
+                        _recentPredictions.postValue(emptyList())
                     } else {
                         // B) If the last prediction is from today, just update the recent predictions with the list from SharedPreferences
                         _recentPredictions.postValue(rawPredictions)
                     }
                 } else {
-                    // If no predictions are available, create and save the first prediction
-                    val newPrediction = Prediction(timestamp = System.currentTimeMillis().toString(), label = "CurrentActivity")
-                    addPredictionToSharedPreferences(context, newPrediction, "predictions")
-                    _recentPredictions.postValue(listOf(newPrediction))
+                    // If no predictions are available, pass a empty list
+                    _recentPredictions.postValue(rawPredictions)
                 }
 
             } catch (e: Exception) {
