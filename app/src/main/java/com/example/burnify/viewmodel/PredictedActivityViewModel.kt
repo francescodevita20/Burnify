@@ -42,7 +42,7 @@ class PredictedActivityViewModel(application: Application) : AndroidViewModel(ap
                         // Check for a gap longer than a threshold (e.g., 1 hour or 60 minutes)
                         val gapDuration = calculateDuration(processedAt, nextProcessedAt)
                         if (gapDuration > 0.25) { // Adjust this threshold based on your needs
-                            durationMinutes = 0.10 // Set duration to 0 if there is a long gap
+                            durationMinutes = 0.20 // Set duration to 0.10 if there is a long gap
                         }
                     }
 
@@ -74,38 +74,6 @@ class PredictedActivityViewModel(application: Application) : AndroidViewModel(ap
         } catch (e: Exception) {
             e.printStackTrace()
             0.0 // Fallback in case of errors
-        }
-    }
-
-    // Funzione per aggiornare i dati (se necessario)
-    fun updatePredictedActivityData(predictions: List<ActivityPredictionWithDuration>) {
-        _predictedActivityData.value = predictions
-    }
-
-    // Funzione per estrarre solo l'ora dalla data
-    fun getHourFromDate(dateString: String): Int {
-        return try {
-            // Normalizza la stringa: aggiunge una cifra mancante nei millisecondi se necessario
-            val normalizedDateString = if (dateString.contains(".")) {
-                val parts = dateString.split(".")
-                if (parts[1].length < 3) {
-                    parts[0] + "." + parts[1].padEnd(3, '0') // Aggiunge zeri per arrivare a 3 cifre
-                } else {
-                    dateString
-                }
-            } else {
-                dateString
-            }
-
-            // Formatter per il parsing
-            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
-            val dateTime = LocalDateTime.parse(normalizedDateString, formatter)
-
-            // Restituisce solo l'ora come intero
-            dateTime.hour
-        } catch (e: Exception) {
-            e.printStackTrace()
-            -1 // Valore di fallback in caso di errore
         }
     }
 

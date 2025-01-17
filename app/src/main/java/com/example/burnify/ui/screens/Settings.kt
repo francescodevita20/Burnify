@@ -1,6 +1,7 @@
 package com.example.burnify.ui.screens
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -74,16 +75,8 @@ class Settings : Fragment() {
                     R.id.modesavedModeRadioButton -> "maxbatterysaving"
                     else -> userData.selectedMode
                 }
-                saveModeSettings()
             }
         }
-    }
-
-    private fun saveModeSettings() {
-        requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE)
-            .edit()
-            .putString("workingmode", userData.selectedMode)
-            .apply()
     }
 
     private fun setupUserInformation() {
@@ -129,10 +122,22 @@ class Settings : Fragment() {
         binding.updateButton.setOnClickListener {
             if (validateUserInput()) {
                 saveUserData()
+
+                // Save mode settings and send the broadcast
+                requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE)
+                    .edit()
+                    .putString("workingmode", userData.selectedMode)
+                    .apply()
+
+                val intent = Intent("com.example.burnify.UPDATE_SAMPLING_RATE")
+                intent.putExtra("workingMode", userData.selectedMode)
+                requireContext().sendBroadcast(intent)
+
                 hideKeyboard()
             }
         }
     }
+
 
     private fun validateUserInput(): Boolean {
         val weight = binding.weightEditText.text.toString()
@@ -225,8 +230,6 @@ class Settings : Fragment() {
             // Keyboard hiding failed silently
         }
     }
-
-
 
     private fun showToast(message: String) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
