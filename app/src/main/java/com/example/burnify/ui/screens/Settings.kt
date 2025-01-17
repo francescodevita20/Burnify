@@ -23,7 +23,7 @@ class Settings : Fragment() {
 
     private val userData = UserSettings()
     private class UserSettings {
-        var selectedMode: String = "Maximum Battery Saving"
+        var selectedMode: String = "maxbatterysaving"
         var weight: String = ""
         var height: String = ""
         var age: String = ""
@@ -50,7 +50,7 @@ class Settings : Fragment() {
 
     private fun loadSettings() {
         requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE).apply {
-            userData.selectedMode = getString("workingmode", "Maximum Accuracy") ?: "Maximum Accuracy"
+            userData.selectedMode = getString("workingmode", "maxaccuracy") ?: "maxaccuracy"
         }
 
         requireContext().getSharedPreferences("userdata", Context.MODE_PRIVATE).apply {
@@ -64,14 +64,14 @@ class Settings : Fragment() {
     private fun setupModeSelection() {
         binding.ModeRadioGroup.apply {
             when (userData.selectedMode) {
-                "Maximum Accuracy" -> binding.modeMaxAccuracyRadioButton.isChecked = true
-                "Maximum Battery Saving" -> binding.modesavedModeRadioButton.isChecked = true
+                "maxaccuracy" -> binding.modeMaxAccuracyRadioButton.isChecked = true
+                "maxbatterysaving" -> binding.modesavedModeRadioButton.isChecked = true
             }
 
             setOnCheckedChangeListener { _, checkedId ->
                 userData.selectedMode = when (checkedId) {
-                    R.id.modeMaxAccuracyRadioButton -> "Maximum Accuracy"
-                    R.id.modesavedModeRadioButton -> "Maximum Battery Saving"
+                    R.id.modeMaxAccuracyRadioButton -> "maxaccuracy"
+                    R.id.modesavedModeRadioButton -> "maxbatterysaving"
                     else -> userData.selectedMode
                 }
                 saveModeSettings()
