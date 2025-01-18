@@ -1,14 +1,17 @@
 package com.example.burnify.service
 
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.IBinder
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.example.burnify.util.SensorDataManager
 import com.example.burnify.util.NotificationHelper
 
@@ -21,10 +24,31 @@ class UnifiedSensorService : Service(), SensorEventListener {
     private var gyroscopeSensor: Sensor? = null
     private var magnetometerSensor: Sensor? = null
 
+    // BroadcastReceiver to handle mode changes
+    private val samplingRateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == "com.example.burnify.UPDATE_SAMPLING_RATE") {
+                val workingMode = intent.getStringExtra("workingMode") ?: "maxaccuracy"
+                Log.d("SensorService", "Received mode change: $workingMode")
+                updateSamplingRate(workingMode)
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         notificationHelper = NotificationHelper(this) // Initialize NotificationHelper
+
+        // Register the BroadcastReceiver with the required flag
+        val filter = IntentFilter("com.example.burnify.UPDATE_SAMPLING_RATE")
+        ContextCompat.registerReceiver(
+            this,
+            samplingRateReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+
         initializeSensors()
     }
 
@@ -38,44 +62,47 @@ class UnifiedSensorService : Service(), SensorEventListener {
     }
 
     /**
-     * Initializes the sensors and registers the listener.
+     * Initializes the sensors and registers the listener with the default working mode.
      */
     private fun initializeSensors() {
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         magnetometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
 
-        // Retrieve working mode from SharedPreferences
-        val workingMode = com.example.burnify.util.getSharedPreferences(
-            applicationContext,
-            "settings",
-            "settings_key"
-        )?.get("workingmode") as? String
+        val sharedPreferences = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val workingMode = sharedPreferences.getString("workingmode", "maxaccuracy") ?: "maxaccuracy"
+        updateSamplingRate(workingMode)
+    }
+
+    /**
+     * Updates the sensor sampling rate based on the working mode.
+     */
+    private fun updateSamplingRate(workingMode: String) {
+        stopSensors() // Unregister the previous listeners
+
         val samplingDelay = if (workingMode == "maxbatterysaving") {
-            800_000 // 800 milliseconds in microseconds
+            SensorManager.SENSOR_DELAY_NORMAL // Normal delay for battery saving mode
         } else {
             SensorManager.SENSOR_DELAY_UI // Default UI delay
         }
 
-        // Log the selected delay
-        Log.d("SensorService", "Working mode: $workingMode, Sampling delay: $samplingDelay")
+        Log.d("SensorService", "Updating sampling delay to: $samplingDelay")
 
-        if (accelerometerSensor == null) {
-            Log.e("SensorService", "Accelerometer not available")
-        } else {
-            sensorManager.registerListener(this, accelerometerSensor, samplingDelay)
+        registerSensors(samplingDelay)
+    }
+
+    /**
+     * Registers sensors with the specified sampling delay.
+     */
+    private fun registerSensors(samplingDelay: Int) {
+        accelerometerSensor?.let {
+            sensorManager.registerListener(this, it, samplingDelay)
         }
-
-        if (gyroscopeSensor == null) {
-            Log.e("SensorService", "Gyroscope not available")
-        } else {
-            sensorManager.registerListener(this, gyroscopeSensor, samplingDelay)
+        gyroscopeSensor?.let {
+            sensorManager.registerListener(this, it, samplingDelay)
         }
-
-        if (magnetometerSensor == null) {
-            Log.e("SensorService", "Magnetometer not available")
-        } else {
-            sensorManager.registerListener(this, magnetometerSensor, samplingDelay)
+        magnetometerSensor?.let {
+            sensorManager.registerListener(this, it, samplingDelay)
         }
     }
 
@@ -118,6 +145,7 @@ class UnifiedSensorService : Service(), SensorEventListener {
 
     override fun onDestroy() {
         // Clean up resources when the service is stopped
+        unregisterReceiver(samplingRateReceiver)
         stopSensors()
         super.onDestroy()
     }

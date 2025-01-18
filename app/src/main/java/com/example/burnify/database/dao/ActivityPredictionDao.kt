@@ -21,18 +21,24 @@ interface ActivityPredictionDao {
     suspend fun insertActivityPrediction(activityPrediction: ActivityPrediction)
 
     /**
-     * Deletes activity prediction samples that are older than one day.
-     * This function removes entries with a processed date older than 1 day from the current time.
+     * Deletes activity prediction samples from previous days, including entries from the previous calendar day.
      */
-    @Query("DELETE FROM activity_prediction WHERE datetime(processedAt) < datetime('now', '-1 day')")
+    @Query("""
+        DELETE FROM activity_prediction 
+        WHERE date(strftime('%Y-%m-%d', processedAt)) < date('now')
+    """)
     suspend fun deleteSamplesOlderThanOneDay()
 
     /**
-     * Retrieves activity prediction samples from the last day.
-     * @return A list of samples processed within the last day, ordered by the most recent.
+     * Retrieves activity prediction samples processed today.
+     * @return A list of samples processed today, ordered by the most recent.
      */
-    @Query("SELECT * FROM activity_prediction WHERE datetime(processedAt) >= datetime('now', '-1 day') ORDER BY datetime(processedAt) DESC")
-    suspend fun getSamplesFromLastDay(): List<ActivityPrediction>
+    @Query("""
+        SELECT * FROM activity_prediction 
+        WHERE date(strftime('%Y-%m-%d', processedAt)) = date('now')
+        ORDER BY datetime(processedAt) DESC
+    """)
+    suspend fun getSamplesFromToday(): List<ActivityPrediction>
 
     /**
      * Retrieves all activity prediction samples from the database.

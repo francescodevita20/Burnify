@@ -1,4 +1,5 @@
 package com.example.burnify.ui.components
+
 import android.graphics.Color
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +34,11 @@ fun CaloriesBurnedChart(activityData: List<ActivityData>) {
     // Filter for valid hours (0-23)
     val validData = activityData.filter { it.hour in 0..23 }
 
+    // Log filtered valid data
+    LaunchedEffect(validData) {
+        println("Filtered valid data: $validData")
+    }
+
     // Group data by hour and sum up the calories burned
     val groupedData = validData
         .groupBy { it.hour } // Group data by hour
@@ -59,6 +65,11 @@ fun CaloriesBurnedChart(activityData: List<ActivityData>) {
         return
     }
 
+    // Log the entries being used for the chart
+    LaunchedEffect(entries) {
+        println("Chart entries: $entries")
+    }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -70,6 +81,7 @@ fun CaloriesBurnedChart(activityData: List<ActivityData>) {
                     val dataSet = LineDataSet(entries, "Burned Calories").apply {
                         color = Color.RED // Set line color
                         lineWidth = 2f // Set line width
+                        valueTextSize = 12f // Increase this value to make the text bigger
                         setCircleColor(Color.RED) // Set circle color at each data point
                         valueTextColor = Color.BLUE // Set text color for the calorie values
                         setDrawValues(true) // Display values on the chart

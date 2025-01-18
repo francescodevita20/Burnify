@@ -30,14 +30,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
-            android:text="MaxAccuracy" />
+            android:text="Max Accuracy" />
 
         <!-- savemode RadioButton -->
         <RadioButton
             android:id="@+id/modesavedModeRadioButton"
             android:layout_width="165dp"
             android:layout_height="wrap_content"
-            android:text="batterysaving" />
+            android:text="Battery Saving" />
     </RadioGroup>
 
 
@@ -125,7 +125,7 @@
         android:id="@+id/stop"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Stop "
+        android:text="Stop Movement Detection "
         android:layout_marginTop="16dp"/>
 
 </LinearLayout>

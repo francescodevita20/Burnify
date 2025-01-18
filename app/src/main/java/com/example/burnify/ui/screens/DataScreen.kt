@@ -9,6 +9,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.burnify.databinding.DataScreenBinding
 import com.example.burnify.viewmodel.LastPredictionViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
 class DataScreen : Fragment() {
 
@@ -35,20 +37,25 @@ class DataScreen : Fragment() {
     private fun setupObservers() {
         Log.d("DataScreen", "Setting up observers")
 
-        // Observe last prediction
+        // Observe the most recent prediction
         lastPredictionViewModel.lastPredictionData.observe(viewLifecycleOwner) { prediction ->
             Log.d("DataScreen", "Prediction updated: $prediction")
             binding.predictionData.text = when {
-                prediction != null -> prediction // Assuming prediction is now a String
+                prediction != null -> prediction // prediction is a String (label)
                 else -> "No prediction available"
             }
         }
 
-        // Observe recent predictions
+        // Observe the list of recent predictions
         lastPredictionViewModel.recentPredictions.observe(viewLifecycleOwner) { predictions ->
             Log.d("DataScreen", "Recent predictions updated: $predictions")
             binding.recentActivitiesData.text = if (predictions.isNotEmpty()) {
-                predictions.joinToString("\n") // Predictions are now strings, no need for .toString() on each
+                predictions.joinToString("\n") { prediction ->
+                    // Format timestamp to a readable string
+                    val timestamp = prediction.timestamp.toLong()
+                    val formattedTime = formatTimestamp(timestamp)
+                    "$formattedTime: ${prediction.label}"
+                }
             } else {
                 "No predictions available"
             }
@@ -58,5 +65,12 @@ class DataScreen : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    // Helper function to format timestamp to a readable date format
+    private fun formatTimestamp(timestamp: Long): String {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val date = Date(timestamp)
+        return dateFormat.format(date)
     }
 }

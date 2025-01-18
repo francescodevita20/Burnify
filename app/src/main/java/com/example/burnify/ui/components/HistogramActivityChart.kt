@@ -1,6 +1,7 @@
 package com.example.burnify.ui.components
 
 import android.graphics.Color
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,15 +20,16 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import androidx.compose.ui.viewinterop.AndroidView
 
 @Composable
-fun HistogramActivityChart(classes: List<String>) {
+fun HistogramActivityChart(durations: Map<String, Double>) {
 
-    // Log the received class data for debugging purposes
-    LaunchedEffect(classes) {
-        println("Received classes: $classes")
+    // Log the received durations to ensure we get the correct values
+    LaunchedEffect(durations) {
+        Log.d("HistogramActivityChart", "Received durations: $durations")
     }
 
-    // Display loading message if no classes are provided
-    if (classes.isEmpty()) {
+    // If there are no valid durations or if all are zeros, show the loading message
+    if (durations.isEmpty() || durations.values.all { it == 0.0 }) {
+        Log.d("HistogramActivityChart", "No valid durations, showing loading message.")
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -42,112 +44,80 @@ fun HistogramActivityChart(classes: List<String>) {
             )
         }
     } else {
-        // Get unique classes from the provided list
-        val uniqueClasses = classes.distinct()
-
-        // Count occurrences of each class in the provided 'classes' list
-        val classOccurrences = uniqueClasses.associateWith { className ->
-            classes.count { it == className }
+        // Generate the list of BarEntry objects for the bar chart
+        val barEntries = durations.entries.mapIndexed { index, entry ->
+            Log.d("HistogramActivityChart", "Creating bar entry for ${entry.key}: ${entry.value}")
+            BarEntry(index.toFloat(), entry.value.toFloat())
         }
 
-        // Log the class occurrences for debugging purposes
-        println("Class occurrences: $classOccurrences")
-
-        // Create a list of BarEntry objects from the class occurrences
-        val barEntries = uniqueClasses.mapIndexed { index, className ->
-            BarEntry(index.toFloat(), classOccurrences[className]?.toFloat() ?: 0f)
-        }
-
-        // Calculate the maximum occurrence value to set axis range
-        val maxOccurrences = classOccurrences.values.maxOrNull()?.toFloat() ?: 0f
-
-        // Create y-axis values: 0, max/2, max
-        val yValues = listOf(0f, maxOccurrences / 2, maxOccurrences)
+        // Calculate the maximum duration for setting Y-axis range
+        val maxDuration = durations.values.maxOrNull()?.toFloat() ?: 0f
+        Log.d("HistogramActivityChart", "Max duration: $maxDuration")
 
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Render the bar chart using AndroidView to embed a BarChart from MPAndroidChart
-            AndroidView(factory = { context ->
-                BarChart(context).apply {
-                    // Create a dataset for the bar chart
-                    val dataSet = BarDataSet(barEntries, "Class Occurrences").apply {
-                        // Set a light gray color for all bars
-                        setColor(Color.parseColor("#B0BEC5"))
-                    }
+            // Render the bar chart using AndroidView
+            AndroidView(
+                factory = { context ->
+                    BarChart(context).apply {
+                        // Disable the chart description
+                        description.isEnabled = false
 
-                    // Set the data for the chart
-                    data = BarData(dataSet)
-
-                    // Disable the chart description
-                    description.isEnabled = false
-
-                    // Custom y-axis value formatter: Display integer values only
-                    axisLeft.valueFormatter = object : ValueFormatter() {
-                        override fun getFormattedValue(value: Float): String {
-                            return value.toInt().toString() // Convert float to integer for display
-                        }
-                    }
-
-                    // Set the granularity and range for the left y-axis
-                    axisLeft.setGranularity(1f)
-                    axisLeft.axisMinimum = 0f
-                    axisLeft.axisMaximum = maxOccurrences * 1.1f // Add a margin to the max y-value
-                    axisLeft.setGranularityEnabled(true) // Enable granularity to avoid small intervals
-
-                    // Add labels at 0, max/2, and max values for clarity
-                    axisLeft.setLabelCount(3, true)
-                    axisLeft.valueFormatter = object : ValueFormatter() {
-                        override fun getFormattedValue(value: Float): String {
-                            return when (value) {
-                                0f -> "0"
-                                maxOccurrences / 2 -> "${(maxOccurrences / 2).toInt()}"
-                                maxOccurrences -> "${maxOccurrences.toInt()}"
-                                else -> ""
+                        // Configure the left Y-axis to show integer values
+                        axisLeft.valueFormatter = object : ValueFormatter() {
+                            override fun getFormattedValue(value: Float): String {
+                                return value.toInt().toString()
                             }
                         }
-                    }
+                        axisLeft.axisMinimum = 0f
+                        axisLeft.axisMaximum = maxDuration * 1.1f // Add a margin to the max Y value
+                        axisLeft.setLabelCount(3, true)
 
-                    // Set x-axis granularity (spacing between labels)
-                    xAxis.setGranularity(1f)
-
-                    // Custom x-axis value formatter to display class names (strings)
-                    xAxis.valueFormatter = object : ValueFormatter() {
-                        override fun getFormattedValue(value: Float): String {
-                            return uniqueClasses.getOrElse(value.toInt()) { "" }
+                        // Configure the X-axis to show class names
+                        xAxis.setGranularity(1f) // Set the granularity of the X-axis
+                        xAxis.valueFormatter = object : ValueFormatter() {
+                            override fun getFormattedValue(value: Float): String {
+                                return durations.keys.elementAtOrNull(value.toInt()) ?: ""
+                            }
                         }
+
+                        // Disable the right Y-axis
+                        axisRight.isEnabled = false
+
+                        // Disable the legend
+                        legend.isEnabled = false
+
+                        // Disable markers (text labels above bars)
+                        setDrawMarkers(false)
+
+                        // Position the X-axis labels at the bottom to prevent overlap
+                        xAxis.position = com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(300.dp), // Set the chart height
+                // Use a key to force recreation when `durations` change
+                update = { barChart ->
+                    // Clear previous data before setting new data
+                    barChart.clear()
+
+                    // Create a new BarDataSet with the current data
+                    val dataSet = BarDataSet(barEntries, "Activity Durations").apply {
+                        setColor(Color.parseColor("#B0BEC5"))
+                        valueTextSize = 12f // Adjust the text size on the bars
                     }
 
-                    // Disable the right y-axis (not needed in this case)
-                    axisRight.isEnabled = false
+                    // Set the new BarData to the chart
+                    barChart.data = BarData(dataSet)
 
-                    // Disable the legend below the chart
-                    legend.isEnabled = false
+                    // Force a layout pass and redraw after setting new data
+                    barChart.notifyDataSetChanged()
+                    barChart.invalidate()
 
-                    // Remove markers (text labels above bars)
-                    setDrawMarkers(false)
-
-                    // Position the x-axis labels at the bottom to prevent overlap
-                    xAxis.setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM)
-
-                    // Set axis limits and margin for clarity
-                    axisLeft.axisMinimum = 0f
-                    axisLeft.axisMaximum = (maxOccurrences * 1.1f).toFloat()
+                    // Log chart data setting
+                    Log.d("HistogramActivityChart", "Chart data set with ${barEntries.size} entries.")
                 }
-            }, modifier = Modifier
-                .fillMaxWidth()
-                .height(300.dp) // Set chart height
-            )
-
-            // Title under the chart
-            Text(
-                text = "Activity History",
-                style = TextStyle(
-                    color = ComposeColor.Black,
-                    fontSize = 16.sp
-                ),
-                modifier = Modifier.padding(top = 8.dp)
             )
         }
     }
