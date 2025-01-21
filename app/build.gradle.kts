@@ -49,7 +49,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation(libs.androidx.adapters)
     implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx) // O l'ultima versione disponibile
+    implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.androidx.fragment.ktx) // O l'ultima versione disponibile
         // debugImplementation because LeakCanary should only run in debug builds.
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
     implementation ("com.google.code.gson:gson:2.10.1") // Aggiungi questa dipendenza
@@ -64,6 +65,7 @@ dependencies {
     implementation ("androidx.navigation:navigation-ui-ktx:2.7.0")
     implementation ("androidx.compose.material3:material3:<latest_version>")
     implementation ("com.google.android.material:material:1.7.0")
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.16.0-rc1")
 
 
 
@@ -100,6 +102,7 @@ dependencies {
 
         // optional - Paging 3 Integration
         implementation("androidx.room:room-paging:$room_version")
+
 
 
     }

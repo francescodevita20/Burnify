@@ -28,6 +28,7 @@ import android.graphics.Color
  */
 class MainActivity : AppCompatActivity() {
 
+
     private val lastPredictionViewModel: LastPredictionViewModel by viewModels()
     private lateinit var binding: ActivityMainBinding
 
