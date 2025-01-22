@@ -18,7 +18,6 @@ import com.example.burnify.viewmodel.PredictedActivityViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import com.example.burnify.util.getSharedPreferences
 import java.time.LocalDateTime
@@ -90,7 +89,7 @@ class TodayScreenActivity : Fragment() {
         // Use lifecycleScope to collect flow from ViewModel
         lifecycleScope.launch {
             viewModel.predictedActivityData.collect { data ->
-                data?.let {
+                data.let {
                     // Logging the entire data to see what we're working with
                     Log.d("observeData", "Data received: $it")
 
@@ -129,7 +128,7 @@ class TodayScreenActivity : Fragment() {
 
                     // Log the durations map
                     val durationsMap = it.fold(mutableMapOf<String, Double>()) { acc, item ->
-                        val label = item.label ?: ""
+                        val label = item.label
                         acc[label] = (acc[label] ?: 0.0) + item.durationMinutes
                         acc
                     }
@@ -174,7 +173,7 @@ class TodayScreenActivity : Fragment() {
 
     private fun updateTotalCalories() {
         // Ensure caloriesData is not null and contains values
-        val total = caloriesData.value?.sumOf { it.caloriesBurned.toDouble() } ?: 0.0
+        val total = caloriesData.value.sumOf { it.caloriesBurned.toDouble() }
 
         // Log the total calories being calculated
         Log.d("updateTotalCalories", "Total Calories Burned calculated: %.2f kcal".format(total))

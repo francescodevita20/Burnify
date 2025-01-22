@@ -120,17 +120,17 @@ fun CaloriesBurnedChart(activityData: List<ActivityData>) {
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp) // Set chart height
+                .height(300.dp)
         )
 
         // Display a label for the chart
         Text(
             text = "Calories Burned",
             style = TextStyle(
-                color = androidx.compose.ui.graphics.Color.Black, // Set text color
-                fontSize = 16.sp // Set text font size
+                color = androidx.compose.ui.graphics.Color.Black,
+                fontSize = 16.sp
             ),
-            modifier = Modifier.padding(top = 8.dp) // Add some padding above the label
+            modifier = Modifier.padding(top = 8.dp) // Padding above the label
         )
     }
 }

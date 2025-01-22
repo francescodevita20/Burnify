@@ -5,7 +5,6 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.example.burnify.database.ActivityPrediction
-import com.example.burnify.database.InputModel
 
 /**
  * Data Access Object (DAO) for performing operations on the activity_prediction table.
@@ -39,13 +38,6 @@ interface ActivityPredictionDao {
         ORDER BY datetime(processedAt) DESC
     """)
     suspend fun getSamplesFromToday(): List<ActivityPrediction>
-
-    /**
-     * Retrieves all activity prediction samples from the database.
-     * @return A list of all activity prediction samples, ordered by the most recent.
-     */
-    @Query("SELECT * FROM activity_prediction ORDER BY datetime(processedAt) DESC")
-    suspend fun getAllSamples(): List<ActivityPrediction>
 
     /**
      * Retrieves the most recent activity prediction sample.

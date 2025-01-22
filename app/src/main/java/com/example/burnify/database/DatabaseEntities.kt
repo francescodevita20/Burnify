@@ -38,22 +38,7 @@ data class AccelerometerProcessedSample(
     val energyBand1_3Hz: Float, // Energy in 1-3 Hz frequency band
     val energyBand3_5Hz: Float, // Energy in 3-5 Hz frequency band
     val energyBand5HzPlus: Float // Energy in 5 Hz and above frequency band
-) {
-    /**
-     * Prints the details of the accelerometer processed sample as a single string.
-     * @return A string containing all the sample values.
-     */
-    fun printSampleDetails(): String {
-        return "ID: $id, Processed At: $processedAt, Mean X: $meanX, Mean Y: $meanY, Mean Z: $meanZ, " +
-                "Standard Deviation X: $standardDeviationX, Y: $standardDeviationY, Z: $standardDeviationZ, " +
-                "Percentile 25 X: $percentile25X, Y: $percentile25Y, Z: $percentile25Z, " +
-                "Percentile 50 X: $percentile50X, Y: $percentile50Y, Z: $percentile50Z, " +
-                "Percentile 75 X: $percentile75X, Y: $percentile75Y, Z: $percentile75Z, " +
-                "Third Moment: $thirdMoment, Fourth Moment: $fourthMoment, " +
-                "Entropy Value: $entropyValue, Spectral Entropy: $spectralEntropy, Autocorrelation: $autocorrelation, " +
-                "Correlation XY: $correlationXY, XZ: $correlationXZ, YZ: $correlationYZ"
-    }
-}
+)
 
 /**
  * Represents a processed gyroscope sample with statistical and spectral features.
@@ -90,22 +75,7 @@ data class GyroscopeProcessedSample(
     val energyBand1_3Hz: Float, // Energy in 1-3 Hz frequency band
     val energyBand3_5Hz: Float, // Energy in 3-5 Hz frequency band
     val energyBand5HzPlus: Float // Energy in 5 Hz and above frequency band
-) {
-    /**
-     * Prints the details of the gyroscope processed sample as a single string.
-     * @return A string containing all the sample values.
-     */
-    fun printSampleDetails(): String {
-        return "ID: $id, Processed At: $processedAt, Mean X: $meanX, Mean Y: $meanY, Mean Z: $meanZ, " +
-                "Standard Deviation X: $standardDeviationX, Y: $standardDeviationY, Z: $standardDeviationZ, " +
-                "Percentile 25 X: $percentile25X, Y: $percentile25Y, Z: $percentile25Z, " +
-                "Percentile 50 X: $percentile50X, Y: $percentile50Y, Z: $percentile50Z, " +
-                "Percentile 75 X: $percentile75X, Y: $percentile75Y, Z: $percentile75Z, " +
-                "Third Moment: $thirdMoment, Fourth Moment: $fourthMoment, " +
-                "Entropy Value: $entropyValue, Spectral Entropy: $spectralEntropy, Autocorrelation: $autocorrelation, " +
-                "Correlation XY: $correlationXY, XZ: $correlationXZ, YZ: $correlationYZ"
-    }
-}
+)
 
 /**
  * Represents a processed magnetometer sample with statistical and spectral features.
@@ -142,22 +112,7 @@ data class MagnetometerProcessedSample(
     val energyBand1_3Hz: Float, // Energy in 1-3 Hz frequency band
     val energyBand3_5Hz: Float, // Energy in 3-5 Hz frequency band
     val energyBand5HzPlus: Float // Energy in 5 Hz and above frequency band
-) {
-    /**
-     * Prints the details of the magnetometer processed sample as a single string.
-     * @return A string containing all the sample values.
-     */
-    fun printSampleDetails(): String {
-        return "ID: $id, Processed At: $processedAt, Mean X: $meanX, Mean Y: $meanY, Mean Z: $meanZ, " +
-                "Standard Deviation X: $standardDeviationX, Y: $standardDeviationY, Z: $standardDeviationZ, " +
-                "Percentile 25 X: $percentile25X, Y: $percentile25Y, Z: $percentile25Z, " +
-                "Percentile 50 X: $percentile50X, Y: $percentile50Y, Z: $percentile50Z, " +
-                "Percentile 75 X: $percentile75X, Y: $percentile75Y, Z: $percentile75Z, " +
-                "Third Moment: $thirdMoment, Fourth Moment: $fourthMoment, " +
-                "Entropy Value: $entropyValue, Spectral Entropy: $spectralEntropy, Autocorrelation: $autocorrelation, " +
-                "Correlation XY: $correlationXY, XZ: $correlationXZ, YZ: $correlationYZ"
-    }
-}
+)
 
 /**
  * Represents a model containing accelerometer, gyroscope, and magnetometer data, along with a label.

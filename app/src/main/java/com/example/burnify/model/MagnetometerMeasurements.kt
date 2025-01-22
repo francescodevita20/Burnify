@@ -1,9 +1,7 @@
 package com.example.burnify.model
 
-import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
-import com.example.burnify.util.SensorDataManager
 
 /**
  * Data model representing an individual magnetometer sample with x, y, z values.
@@ -12,18 +10,6 @@ class MagnetometerSample() : Parcelable {
     var x: Float = 0f
     var y: Float = 0f
     var z: Float = 0f
-
-    constructor(x: Float, y: Float, z: Float) : this() {
-        this.x = x
-        this.y = y
-        this.z = z
-    }
-
-    fun setSample(x: Float, y: Float, z: Float) {
-        this.x = x
-        this.y = y
-        this.z = z
-    }
 
     fun getValues(): FloatArray {
         return floatArrayOf(x, y, z)
@@ -57,13 +43,11 @@ class MagnetometerSample() : Parcelable {
 /**
  * Data model representing a collection of magnetometer samples.
  */
-class MagnetometerMeasurements : Parcelable {
+class MagnetometerMeasurements private constructor(parcel: Parcel) : Parcelable {
     private val samples = mutableListOf<MagnetometerSample>()
     private var maxSize = 500
 
-    constructor()
-
-    private constructor(parcel: Parcel) {
+    init {
         maxSize = parcel.readInt()
         parcel.readList(samples, MagnetometerSample::class.java.classLoader)
     }
@@ -74,43 +58,6 @@ class MagnetometerMeasurements : Parcelable {
     }
 
     override fun describeContents(): Int = 0
-
-    /**
-     * Adds a sample and processes data when the list is full.
-     * @param context The context for interacting with system resources.
-     * @param sample The magnetometer sample to add.
-     */
-    fun addSample(context: Context, sample: MagnetometerSample) {
-        samples.add(sample)
-
-        if (isFull()) {
-            // Convert samples to a flattened List<Float>
-            val magnetometerData = getSamples().map { it.toList() }.flatten()
-
-            // Send magnetometer data to SensorDataManager
-            SensorDataManager.updateMagnetometerData(magnetometerData, context)
-
-            // Clear samples after processing
-            clear()
-        }
-    }
-
-    /**
-     * Returns the list of magnetometer samples as FloatArrays.
-     */
-    fun getSamples(): List<FloatArray> = samples.map { it.getValues() }
-
-    /**
-     * Checks if the sample list has reached its maximum size.
-     */
-    fun isFull(): Boolean = samples.size >= maxSize
-
-    /**
-     * Clears the list of samples.
-     */
-    fun clear() {
-        samples.clear()
-    }
 
     companion object CREATOR : Parcelable.Creator<MagnetometerMeasurements> {
         override fun createFromParcel(parcel: Parcel): MagnetometerMeasurements {

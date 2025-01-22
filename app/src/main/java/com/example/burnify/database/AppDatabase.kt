@@ -52,7 +52,7 @@ object AppDatabaseProvider {
             val instance = Room.databaseBuilder(
                 context.applicationContext, // Use the application context to avoid memory leaks.
                 AppDatabase::class.java,    // Define the database class.
-                "app_database"             // The name of the database file.
+                "app_database"
             )
                 // If schema changes occur, the fallback option will recreate the database.
                 .fallbackToDestructiveMigration()

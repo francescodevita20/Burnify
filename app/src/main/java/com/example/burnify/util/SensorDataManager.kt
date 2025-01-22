@@ -5,8 +5,6 @@ import android.content.Context
 import com.example.burnify.viewmodel.LastPredictionViewModel
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
-import ai.onnxruntime.OrtSession
-import ai.onnxruntime.TensorInfo
 import com.example.burnify.database.ActivityPrediction
 import com.example.burnify.database.AppDatabaseProvider
 import com.example.burnify.database.dao.ActivityPredictionDao
@@ -16,7 +14,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.pow
 import kotlin.math.sqrt
-import kotlin.reflect.typeOf
 
 object SensorDataManager {
     var lastPredictionViewModel: LastPredictionViewModel? = null

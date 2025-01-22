@@ -1,9 +1,7 @@
 package com.example.burnify.model
 
-import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
-import com.example.burnify.util.SensorDataManager
 
 /**
  * Data model representing an individual accelerometer sample with x, y, z values and a timestamp.
@@ -13,24 +11,6 @@ class AccelerometerSample() : Parcelable {
     var y: Float = 0f
     var z: Float = 0f
     var timestamp: Long = 0L // Timestamp in milliseconds since epoch
-
-    constructor(x: Float, y: Float, z: Float, timestamp: Long) : this() {
-        this.x = x
-        this.y = y
-        this.z = z
-        this.timestamp = timestamp
-    }
-
-    fun setSample(x: Float, y: Float, z: Float, timestamp: Long) {
-        this.x = x
-        this.y = y
-        this.z = z
-        this.timestamp = timestamp
-    }
-
-    fun getValues(): FloatArray {
-        return floatArrayOf(x, y, z)
-    }
 
     private constructor(parcel: Parcel) : this() {
         x = parcel.readFloat()
@@ -62,13 +42,11 @@ class AccelerometerSample() : Parcelable {
 /**
  * Data model representing a collection of accelerometer measurements.
  */
-class AccelerometerMeasurements : Parcelable {
+class AccelerometerMeasurements private constructor(parcel: Parcel) : Parcelable {
     private val samples = mutableListOf<AccelerometerSample>()
     private var maxSize = 500
 
-    constructor()
-
-    private constructor(parcel: Parcel) {
+    init {
         maxSize = parcel.readInt()
         parcel.readList(samples, AccelerometerSample::class.java.classLoader)
     }
@@ -80,31 +58,6 @@ class AccelerometerMeasurements : Parcelable {
 
     override fun describeContents(): Int = 0
 
-    /**
-     * Adds an accelerometer sample and updates the SensorDataManager.
-     * @param context The context for interacting with system resources.
-     * @param sample The accelerometer sample to add.
-     */
-    fun addSample(context: Context, sample: AccelerometerSample) {
-        samples.add(sample)
-
-        if (isFull()) {
-            // Convert each FloatArray to a List<Float>, then flatten the result
-            val accelerometerData = getSamples().map { it.toList() }.flatten()
-            SensorDataManager.updateAccelerometerData(accelerometerData, context)
-
-            // Clear the samples after processing
-            clear()
-        }
-    }
-
-    fun getSamples(): List<FloatArray> = samples.map { it.getValues() }
-
-    fun isFull(): Boolean = samples.size >= maxSize
-
-    fun clear() {
-        samples.clear()
-    }
       // parcelable allow it to be passed between Android components
     companion object CREATOR : Parcelable.Creator<AccelerometerMeasurements> {
         override fun createFromParcel(parcel: Parcel): AccelerometerMeasurements {
