@@ -1,269 +1,174 @@
 package com.example.burnify.util
 
+import ai.onnxruntime.OnnxJavaType
 import android.content.Context
-import com.example.burnify.database.dao.ActivityPredictionDao
-import com.example.burnify.database.ActivityPrediction
-import com.example.burnify.database.AppDatabaseProvider
 import com.example.burnify.viewmodel.LastPredictionViewModel
-import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import org.json.JSONArray
-import org.json.JSONException
-import org.json.JSONObject
-import java.io.IOException
-import java.io.InputStream
-import java.security.KeyStore
-import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManagerFactory
+import ai.onnxruntime.OnnxTensor
+import ai.onnxruntime.OrtEnvironment
+import ai.onnxruntime.OrtSession
+import ai.onnxruntime.TensorInfo
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import javax.net.ssl.X509TrustManager
-import javax.net.ssl.HostnameVerifier
-
+import kotlin.math.pow
+import kotlin.math.sqrt
+import kotlin.reflect.typeOf
 
 object SensorDataManager {
     var lastPredictionViewModel: LastPredictionViewModel? = null
 
-    // Store the accelerometer data and other sensor data until all are collected
-    private val accelerometerData: MutableList<List<Float>> = mutableListOf() // List to hold accelerometer data
-    private val gyroscopeData: MutableList<List<Float>> = mutableListOf() // List for gyroscope data
-    private val magnetometerData: MutableList<List<Float>> = mutableListOf() // List for magnetometer data
+    private val accelerometerData: MutableList<List<Float>> = mutableListOf()
+    private val gyroscopeData: MutableList<List<Float>> = mutableListOf()
+    private val magnetometerData: MutableList<List<Float>> = mutableListOf()
 
-    private const val requiredDataPoints = 50 // Number of data points to collect
+    private const val requiredDataPoints = 50
 
-    /**
-     * Updates the accelerometer data (called when new accelerometer data arrives).
-     * @param accelerometerMeasurement The accelerometer measurement (x, y, z).
-     * @param context The application context.
-     */
     fun updateAccelerometerData(accelerometerMeasurement: List<Float>, context: Context) {
         if (accelerometerData.size < requiredDataPoints) {
             accelerometerData.add(accelerometerMeasurement)
         }
-        checkAndSendData(context)
+        checkAndProcessData(context)
     }
 
-    /**
-     * Updates the gyroscope data (called when new gyroscope data arrives).
-     * @param gyroscopeMeasurement The gyroscope measurement (x, y, z).
-     * @param context The application context.
-     */
     fun updateGyroscopeData(gyroscopeMeasurement: List<Float>, context: Context) {
         if (gyroscopeData.size < requiredDataPoints) {
             gyroscopeData.add(gyroscopeMeasurement)
         }
-        checkAndSendData(context)
+        checkAndProcessData(context)
     }
 
-    /**
-     * Updates the magnetometer data (called when new magnetometer data arrives).
-     * @param magnetometerMeasurement The magnetometer measurement (x, y, z).
-     * @param context The application context.
-     */
     fun updateMagnetometerData(magnetometerMeasurement: List<Float>, context: Context) {
         if (magnetometerData.size < requiredDataPoints) {
             magnetometerData.add(magnetometerMeasurement)
         }
-        checkAndSendData(context)
+        checkAndProcessData(context)
     }
 
-    /**
-     * Checks if all data is collected and ready to send.
-     * @param context The application context.
-     */
-    private fun checkAndSendData(context: Context) {
-        // If we have enough data from all sensors
+    private fun checkAndProcessData(context: Context) {
         if (accelerometerData.size >= requiredDataPoints &&
             gyroscopeData.size >= requiredDataPoints &&
             magnetometerData.size >= requiredDataPoints
         ) {
-            // Now all sensor data is collected. Proceed to send the data.
             val unifiedSensorData = combineSensorData(accelerometerData, gyroscopeData, magnetometerData)
+            val extractedFeatures = extractFeatures(unifiedSensorData)
 
-            // Send the complete data to the server
-            sendDataToServer(unifiedSensorData, context)
+            // Stampa del numero di caratteristiche estratte
+            println("Number of extracted features: ${extractedFeatures.size}")
 
-            // Reset all data after sending it
+            if (extractedFeatures.size == 36) {
+                val prediction = runModelOnDevice(extractedFeatures, context)
+                lastPredictionViewModel?.updateLastPredictionData(prediction)
+            } else {
+                lastPredictionViewModel?.updateLastPredictionData("Error: Incorrect feature size")
+            }
+
             resetSensorData()
         }
     }
 
-    /**
-     * Combines accelerometer, gyroscope, and magnetometer data into a unified sensor data format.
-     * @param accelerometerData The accelerometer data.
-     * @param gyroscopeData The gyroscope data.
-     * @param magnetometerData The magnetometer data.
-     * @return The unified sensor data (50 rows, 9 columns).
-     */
     private fun combineSensorData(
         accelerometerData: List<List<Float>>,
         gyroscopeData: List<List<Float>>,
         magnetometerData: List<List<Float>>
     ): List<List<Float>> {
         val unifiedData: MutableList<List<Float>> = mutableListOf()
-
         for (i in 0 until requiredDataPoints) {
             val row: MutableList<Float> = mutableListOf()
-
-            // Add accelerometer data (x, y, z)
             row.addAll(accelerometerData[i])
-
-            // Add gyroscope data (x, y, z)
             row.addAll(gyroscopeData[i])
-
-            // Add magnetometer data (x, y, z)
             row.addAll(magnetometerData[i])
-
             unifiedData.add(row)
         }
-
         return unifiedData
     }
 
-    /**
-     * Sends the complete sensor data to the server via a POST request.
-     * @param unifiedSensorData The combined sensor data.
-     * @param context The application context.
-     */
-    private fun sendDataToServer(unifiedSensorData: List<List<Float>>, context: Context) {
-        val jsonData = convertDataToJson(unifiedSensorData)
-        val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
-        val body = RequestBody.create(mediaType, jsonData)
+    private fun extractFeatures(sensorData: List<List<Float>>): List<Float> {
+        val featureList = mutableListOf<Float>()
 
-        println("BODYYY: $jsonData")
-
-        val request = Request.Builder()
-            .url("https://18.158.61.166:8000/predict/")  // Replace with your server's URL
-            .post(body)
-            .build()
-
-        // Create OkHttpClient with custom SSLContext for the self-signed certificate
-        val client = getOkHttpClientWithPKCS12Cert(context)
-
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                println("HttpRequests: POST request failed. Error: ${e.message}")
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                if (response.isSuccessful) {
-                    val bodyString = response.body?.string()
-                    if (bodyString != null) {
-                        println("HttpRequests: POST request successful. Response: $bodyString")
-                        try {
-                            val jsonObject = JSONObject(bodyString)
-                            val predictedClass = jsonObject.getString("predicted_label")
-                            println("Predicted class: $predictedClass")
-
-                            // Update the LastPredictionViewModel
-                            lastPredictionViewModel?.updateLastPredictionData(predictedClass)
-
-                            // Insert prediction into the database
-                            GlobalScope.launch {
-                                val db = AppDatabaseProvider.getInstance(context)
-                                val dao = db.activityPredictionDao()
-                                insertActivityPredictionToDB(dao, predictedClass)
-                            }
-                        } catch (e: JSONException) {
-                            e.printStackTrace()
-                            println("Error parsing JSON response: ${e.message}")
-                        }
-                    } else {
-                        println("Response body is null")
-                    }
-                } else {
-                    println("HttpRequests: POST request failed. Error code: ${response.code}")
-                }
-            }
-        })
-    }
-
-    /**
-     * Converts the unified sensor data into a JSON string.
-     * @param unifiedSensorData The unified sensor data (500 rows, 9 columns).
-     * @return The unified sensor data as a JSON string.
-     */
-    private fun convertDataToJson(unifiedSensorData: List<List<Float>>): String {
-        val jsonArray = JSONArray()
-
-        for (row in unifiedSensorData) {
-            val jsonRow = JSONArray()
-            for (value in row) {
-                jsonRow.put(value)
-            }
-            jsonArray.put(jsonRow)
+        for (i in 0 until 9) {  // 9 features dai sensori (acc_X, acc_Y, acc_Z, mag_X, mag_Y, mag_Z, gyro_X, gyro_Y, gyro_Z)
+            val featureValues = sensorData.map { it[i] }
+            featureList.add(featureValues.average().toFloat()) // Mean
+            featureList.add(featureValues.standardDeviation().toFloat()) // Std
+            featureList.add(featureValues.minOrNull() ?: 0f) // Min
+            featureList.add(featureValues.maxOrNull() ?: 0f) // Max
         }
 
-        val jsonObject = JSONObject()
-        jsonObject.put("data", jsonArray)
-        return jsonObject.toString()
+        return featureList
     }
 
-    /**
-     * Inserts the predicted activity label into the database.
-     * @param dao The activity prediction DAO.
-     * @param label The predicted activity label.
-     */
-    suspend fun insertActivityPredictionToDB(dao: ActivityPredictionDao, label: String) {
-        val currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    private fun runModelOnDevice(features: List<Float>, context: Context): String {
+        var predictedValue: Long? = 0
+        val env = OrtEnvironment.getEnvironment()
+        return try {
+            val modelBytes = context.assets.open("model.onnx").readBytes()
+            val session = env.createSession(modelBytes)
 
-        val activityPrediction = ActivityPrediction(
-            processedAt = currentDateTime, // The current timestamp
-            label = label // The predicted activity label
-        )
+            // Check and print feature size
+            if (features.size != 36) {
+                throw IllegalArgumentException("Expected 36 features, but got ${features.size}")
+            }
 
-        dao.insertActivityPrediction(activityPrediction)
+
+            // Prepare input as [1, 36]
+            val inputData = arrayOf(features.toFloatArray())
+
+
+            val tensor = OnnxTensor.createTensor(env, inputData)
+
+
+            val inputs = mapOf("float_input" to tensor)
+
+
+            val result = session.run(inputs)
+
+            // Retrieve the output
+            val outputName = session.outputNames.first()
+
+
+            // Get the result, handling the Optional correctly
+            val outputOptional = result[outputName]
+            // Verifica se il valore è presente e stampalo
+
+
+            if (outputOptional.isPresent) {
+                val outputValue = outputOptional.get()
+                if (outputValue is OnnxTensor) {
+                    // Verifica che il tensore contenga dati di tipo INT64
+                    if (outputValue.info.type == OnnxJavaType.INT64) {
+                        val outputIntValue = outputValue.getValue() as LongArray  // Cast esplicito a LongArray
+                        predictedValue = outputIntValue[0]  // Estrai il primo elemento
+
+
+                    } else {
+                        println("Error: Unexpected output type. Expected INT64 but got ${outputValue.info.onnxType}")
+                    }
+                    outputValue.close()
+                } else {
+                    println("Error: Output is not an OnnxTensor.")
+                }
+                // Check if the floatBuffer is null
+                if (predictedValue == null) {
+                    throw IllegalStateException("Output tensor floatBuffer is null.")
+                }
+
+                return predictedValue.toString()
+            } else {
+                throw IllegalStateException("Output is not an OnnxTensor.")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return "Error during inference: ${e.message}"
+        }
     }
 
-    /**
-     * Resets all stored sensor data after sending it to the server.
-     */
+
     private fun resetSensorData() {
         accelerometerData.clear()
         gyroscopeData.clear()
         magnetometerData.clear()
     }
 
-    /**
-     * Creates an OkHttpClient with the custom SSLContext for the self-signed certificate.
-     * Disables hostname verification for development purposes.
-     * @param context The application context.
-     * @return An OkHttpClient instance with the custom SSL configuration.
-     */
-    private fun getOkHttpClientWithPKCS12Cert(context: Context): OkHttpClient {
-        // Load the self-signed certificate from the assets
-        val certInputStream: InputStream = context.assets.open("selfsigned.crt")
-        val certificateFactory = CertificateFactory.getInstance("X.509")
-        val cert = certificateFactory.generateCertificate(certInputStream) as X509Certificate
-
-        // Initialize KeyStore and add the certificate
-        val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
-        keyStore.load(null, null)
-        keyStore.setCertificateEntry("cert", cert)
-
-        // Create a TrustManagerFactory using the KeyStore
-        val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-        trustManagerFactory.init(keyStore)
-
-        // Initialize SSLContext with the TrustManager
-        val sslContext = SSLContext.getInstance("TLS")
-        sslContext.init(null, trustManagerFactory.trustManagers, null)
-
-        // Disable hostname verification (development only)
-        val hostnameVerifier = HostnameVerifier { _, _ -> true }
-
-        // Return OkHttpClient with the custom SSLContext and disabled hostname verification
-        return OkHttpClient.Builder()
-            .sslSocketFactory(
-                sslContext.socketFactory,
-                trustManagerFactory.trustManagers[0] as X509TrustManager
-            )
-            .hostnameVerifier(hostnameVerifier) // Disable hostname verification
-            .build()
+    private fun List<Float>.standardDeviation(): Double {
+        val mean = this.average()
+        return sqrt(this.map { (it - mean).pow(2) }.average())
     }
-
 }
