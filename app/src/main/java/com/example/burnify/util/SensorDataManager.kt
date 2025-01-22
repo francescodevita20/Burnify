@@ -7,8 +7,13 @@ import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import ai.onnxruntime.TensorInfo
+import com.example.burnify.database.ActivityPrediction
+import com.example.burnify.database.AppDatabaseProvider
+import com.example.burnify.database.dao.ActivityPredictionDao
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.math.pow
 import kotlin.math.sqrt
 import kotlin.reflect.typeOf
@@ -149,8 +154,16 @@ object SensorDataManager {
                 if (predictedValue == null) {
                     throw IllegalStateException("Output tensor floatBuffer is null.")
                 }
+                val predictedActivity = convertLabelToActivity(predictedValue)
+                lastPredictionViewModel?.updateLastPredictionData(predictedActivity)
 
-                return predictedValue.toString()
+                // Insert prediction into the database
+                GlobalScope.launch {
+                    val db = AppDatabaseProvider.getInstance(context)
+                    val dao = db.activityPredictionDao()
+                    insertActivityPredictionToDB(dao, predictedActivity)
+                }
+                return predictedActivity
             } else {
                 throw IllegalStateException("Output is not an OnnxTensor.")
             }
@@ -171,4 +184,26 @@ object SensorDataManager {
         val mean = this.average()
         return sqrt(this.map { (it - mean).pow(2) }.average())
     }
+    private fun  convertLabelToActivity(prediction: Long): String {
+        return when (prediction) {
+            0L -> "downstairs"
+            1L -> "running"
+            2L -> "standing"
+            3L -> "upstairs"
+            4L -> "walking"
+            else -> "unknown"
+    }}
+
+    suspend fun insertActivityPredictionToDB(dao: ActivityPredictionDao, label: String) {
+        val currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+
+        val activityPrediction = ActivityPrediction(
+            processedAt = currentDateTime, // The current timestamp
+            label = label // The predicted activity label
+        )
+
+        dao.insertActivityPrediction(activityPrediction)
+    }
 }
+
+
